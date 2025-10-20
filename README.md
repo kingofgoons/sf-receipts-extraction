@@ -6,12 +6,17 @@ A comprehensive project for synthetic ad-campaign receipt generation and extract
 
 ```
 Receipts.extraction/
+├── receipts/               # Generated receipts (not tracked)
 ├── receipts.synthesis/     # Synthetic receipt generation
 │   ├── Python source files
 │   ├── 22 vendor templates
 │   └── Documentation
 │
-└── (Future: receipts.extraction module for OCR/extraction)
+├── receipts-uploader/      # Upload receipts to Snowflake
+│   ├── Service account setup
+│   └── Testing scripts
+│
+└── (Future: receipts.extraction, receipts-processor modules)
 ```
 
 ## receipts.synthesis
@@ -48,6 +53,59 @@ python receipt_generator.py --sample
 ### Documentation
 
 See `receipts.synthesis/README.md` for complete documentation.
+
+---
+
+## receipts-uploader
+
+Upload generated receipts to Snowflake using service account authentication.
+
+### Setup
+
+1. **Install dependencies:**
+   ```bash
+   cd receipts-uploader
+   pip install -r requirements.txt
+   ```
+
+2. **Configure credentials:**
+   ```bash
+   # Copy the template
+   cp config.template.json config.json
+   
+   # Edit config.json with your Snowflake credentials
+   # (This file is excluded from git)
+   ```
+
+3. **Set up Snowflake service account:**
+   - Run the SQL script in Snowflake to create the service user
+   - Configure key-pair authentication
+   - Update config.json with your credentials
+
+### Test Service Account
+
+```bash
+cd receipts-uploader
+
+# Test Snowflake service account connection
+python test_service_account.py
+```
+
+This will verify:
+- ✓ Snowflake connection with service account
+- ✓ Key-pair authentication
+- ✓ Database and schema access
+- ✓ Table creation permissions
+
+### Files
+
+- `config.template.json` - Template for configuration
+- `config.json` - Your credentials (NOT tracked by git)
+- `create.service.user.sql` - Snowflake service account setup
+- `test_service_account.py` - Test service account connection
+- `requirements.txt` - Python dependencies
+
+---
 
 ## Installation
 
@@ -103,6 +161,16 @@ receipts = generator.generate_batch(count=1000)
 - **Quality**: Professional-grade PDFs
 - **Features**: Complete
 
+### receipts-uploader ✅
+- **Status**: Available
+- **Purpose**: Upload receipts to Snowflake
+- **Auth**: Service account with key-pair authentication
+- **Testing**: `test_service_account.py` available
+
+### receipts-processor 🔜
+- **Status**: In development
+- **Purpose**: Process and validate receipt data
+
 ### receipts.extraction 🔜
 - **Status**: Future development
 - **Purpose**: Extract data from receipt PDFs
@@ -117,6 +185,15 @@ receipts = generator.generate_batch(count=1000)
 - pillow
 
 See `receipts.synthesis/requirements.txt` for specific versions.
+
+### receipts-uploader
+- Python 3.7+
+- snowflake-connector-python
+- python-dotenv
+- cryptography
+- requests
+
+See `receipts-uploader/requirements.txt` for specific versions.
 
 ## License
 
