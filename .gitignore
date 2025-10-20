@@ -79,3 +79,15 @@ processed_data/
 temp/
 cache/
 
+# Sensitive configuration and credentials
+config.json
+**/config.json
+*.pem
+*.key
+rsa_key.pub
+rsa_key
+*_key.pub
+*_key.pem
+credentials/
+secrets/
+
