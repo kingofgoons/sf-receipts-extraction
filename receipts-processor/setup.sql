@@ -4,12 +4,14 @@
 -- This script sets up the database, schema, and stage for receipt processing
 -- and grants necessary permissions to the ETL_SERVICE_ROLE
 -- ============================================================================
-
-USE ROLE ACCOUNTADMIN;
+-- Best Practice: Use SYSADMIN for object creation, ACCOUNTADMIN only for grants
+-- ============================================================================
 
 -- ============================================================================
--- 1. Create Database and Schema
+-- 1. Create Database and Schema (as SYSADMIN)
 -- ============================================================================
+
+USE ROLE SYSADMIN;
 
 -- Create the main database for receipt processing
 CREATE DATABASE IF NOT EXISTS RECEIPTS_PROCESSING_DB
@@ -39,8 +41,10 @@ CREATE STAGE IF NOT EXISTS RECEIPTS
 ALTER STAGE RECEIPTS REFRESH;
 
 -- ============================================================================
--- 3. Grant Permissions to ETL_SERVICE_ROLE
+-- 3. Grant Permissions to ETL_SERVICE_ROLE (as ACCOUNTADMIN)
 -- ============================================================================
+
+USE ROLE ACCOUNTADMIN;
 
 -- Grant database usage
 GRANT USAGE ON DATABASE RECEIPTS_PROCESSING_DB TO ROLE ETL_SERVICE_ROLE;
@@ -59,28 +63,37 @@ GRANT WRITE ON STAGE RECEIPTS_PROCESSING_DB.RAW.RECEIPTS TO ROLE ETL_SERVICE_ROL
 GRANT ALL PRIVILEGES ON STAGE RECEIPTS_PROCESSING_DB.RAW.RECEIPTS TO ROLE ETL_SERVICE_ROLE;
 
 -- ============================================================================
--- 4. Verify Setup
+-- 4. Optional: Create Stream on Stage for Automated Processing (as SYSADMIN)
 -- ============================================================================
 
--- Show created objects
-SHOW DATABASES LIKE 'RECEIPTS_PROCESSING_DB';
-SHOW SCHEMAS IN DATABASE RECEIPTS_PROCESSING_DB;
-SHOW STAGES IN SCHEMA RECEIPTS_PROCESSING_DB.RAW;
-
--- Show grants for ETL_SERVICE_ROLE
-SHOW GRANTS TO ROLE ETL_SERVICE_ROLE;
-
--- ============================================================================
--- 5. Optional: Create Stream on Stage for Automated Processing
--- ============================================================================
+USE ROLE SYSADMIN;
+USE DATABASE RECEIPTS_PROCESSING_DB;
+USE SCHEMA RAW;
 
 -- Create a stream to track new files added to the stage
 CREATE STREAM IF NOT EXISTS RECEIPTS_STREAM 
   ON STAGE RECEIPTS_PROCESSING_DB.RAW.RECEIPTS
   COMMENT = 'Stream to track new receipt files uploaded to the stage';
 
--- Grant permissions on the stream
+-- Grant permissions on the stream (as ACCOUNTADMIN)
+USE ROLE ACCOUNTADMIN;
 GRANT SELECT ON STREAM RECEIPTS_PROCESSING_DB.RAW.RECEIPTS_STREAM TO ROLE ETL_SERVICE_ROLE;
+
+-- ============================================================================
+-- 5. Verify Setup
+-- ============================================================================
+
+USE ROLE SYSADMIN;
+
+-- Show created objects
+SHOW DATABASES LIKE 'RECEIPTS_PROCESSING_DB';
+SHOW SCHEMAS IN DATABASE RECEIPTS_PROCESSING_DB;
+SHOW STAGES IN SCHEMA RECEIPTS_PROCESSING_DB.RAW;
+SHOW STREAMS IN SCHEMA RECEIPTS_PROCESSING_DB.RAW;
+
+-- Show grants for ETL_SERVICE_ROLE (requires ACCOUNTADMIN)
+USE ROLE ACCOUNTADMIN;
+SHOW GRANTS TO ROLE ETL_SERVICE_ROLE;
 
 -- ============================================================================
 -- Setup Complete
