@@ -62,13 +62,27 @@ Upload generated receipts to Snowflake using service account authentication.
 
 ### Setup
 
-1. **Install dependencies:**
+1. **Create and activate a virtual environment:**
    ```bash
    cd receipts-uploader
+   
+   # Create virtual environment
+   python -m venv venv
+   
+   # Activate virtual environment
+   # On macOS/Linux:
+   source venv/bin/activate
+   
+   # On Windows:
+   # venv\Scripts\activate
+   ```
+
+2. **Install dependencies:**
+   ```bash
    pip install -r requirements.txt
    ```
 
-2. **Configure credentials:**
+3. **Configure credentials:**
    ```bash
    # Copy the template
    cp config.template.json config.json
@@ -77,7 +91,7 @@ Upload generated receipts to Snowflake using service account authentication.
    # (This file is excluded from git)
    ```
 
-3. **Set up Snowflake service account:**
+4. **Set up Snowflake service account:**
    - Run the SQL script in Snowflake to create the service user
    - Configure key-pair authentication
    - Update config.json with your credentials
