@@ -10,12 +10,12 @@ from vendors import VENDOR_TEMPLATES, VENDOR_NAMES
 class ReceiptGenerator:
     """Generate synthetic ad-campaign receipts in various vendor styles."""
     
-    def __init__(self, output_dir="output"):
+    def __init__(self, output_dir="../receipts"):
         """
         Initialize the receipt generator.
         
         Args:
-            output_dir: Directory to save generated PDFs
+            output_dir: Directory to save generated PDFs (default: ../receipts)
         """
         self.output_dir = output_dir
         self.data_generator = DataGenerator()
@@ -155,8 +155,8 @@ def main():
     parser.add_argument(
         '-o', '--output',
         type=str,
-        default='output',
-        help='Output directory for generated PDFs (default: output)'
+        default='../receipts',
+        help='Output directory for generated PDFs (default: ../receipts)'
     )
     parser.add_argument(
         '--sample',

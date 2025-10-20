@@ -2,6 +2,7 @@
 # Root-level .gitignore
 
 # Output and test directories (anywhere in project)
+receipts/                # Main output directory for generated receipts
 output/
 example_output/
 test_output/

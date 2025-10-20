@@ -21,6 +21,8 @@ pip install -r requirements.txt
 
 ### Generate 10 Random Receipts
 
+Receipts are generated to `../receipts/` directory by default:
+
 ```bash
 python receipt_generator.py -n 10
 ```

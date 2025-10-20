@@ -8,9 +8,9 @@ def test_generator():
     print("Testing Receipt Generator...")
     print("="*60)
     
-    # Initialize generator with test output directory
-    output_dir = "test_output"
-    generator = ReceiptGenerator(output_dir=output_dir)
+    # Initialize generator (using default ../receipts directory)
+    generator = ReceiptGenerator()
+    output_dir = generator.output_dir
     
     print(f"\n✓ Generator initialized with {generator.get_vendor_count()} vendor templates")
     

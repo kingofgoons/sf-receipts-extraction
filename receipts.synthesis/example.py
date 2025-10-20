@@ -9,8 +9,8 @@ def main():
     print("Synthetic Ad-Campaign Receipt Generator - Examples")
     print("="*60)
     
-    # Initialize the generator
-    generator = ReceiptGenerator(output_dir="example_output")
+    # Initialize the generator (using default ../receipts directory)
+    generator = ReceiptGenerator()
     
     print(f"\n✓ Initialized generator with {generator.get_vendor_count()} vendor templates")
     

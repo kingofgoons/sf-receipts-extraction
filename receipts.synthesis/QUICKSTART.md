@@ -56,9 +56,11 @@ Every generated receipt includes:
 
 ## Output
 
-All receipts are saved as PDF files in the `output/` directory (or custom directory specified with `-o` flag).
+All receipts are saved as PDF files in the `../receipts/` directory by default (or custom directory specified with `-o` flag).
 
 Filename format: `receipt_VendorName_YYYYMMDD_HHMMSS_microseconds.pdf`
+
+**Note**: The `receipts/` directory is excluded from version control via `.gitignore`.
 
 ## Notes
 
