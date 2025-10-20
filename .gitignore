@@ -84,10 +84,13 @@ config.json
 **/config.json
 *.pem
 *.key
+*.p8
 rsa_key.pub
+rsa_key.p8
 rsa_key
 *_key.pub
 *_key.pem
+*_key.p8
 credentials/
 secrets/
 
