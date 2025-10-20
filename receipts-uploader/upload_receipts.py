@@ -12,7 +12,14 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 
 
-def load_config(config_path='config.json'):
+# Path to the config file (relative to this script)
+CONFIG_PATH = Path(__file__).parent / 'config.json'
+
+# Path to the private key file (relative to this script)
+PRIVATE_KEY_PATH = Path(__file__).parent.parent / 'rsa_key.p8'
+
+
+def load_config(config_path):
     """Load configuration from config.json."""
     try:
         with open(config_path, 'r') as f:
@@ -56,7 +63,7 @@ def connect_to_snowflake(config):
     print("Connecting to Snowflake...")
     
     # Load private key
-    private_key = load_private_key(config['private_key_path'])
+    private_key = load_private_key(PRIVATE_KEY_PATH)
     
     try:
         conn = snowflake.connector.connect(
@@ -240,17 +247,26 @@ def main():
         default='RECEIPTS_PROCESSING_DB.RAW.RECEIPTS',
         help='Snowflake stage name (default: RECEIPTS_PROCESSING_DB.RAW.RECEIPTS)'
     )
-    parser.add_argument(
-        '-c', '--config',
-        type=str,
-        default='config.json',
-        help='Configuration file path (default: config.json)'
-    )
     
     args = parser.parse_args()
     
+    # Check if private key file exists
+    if not PRIVATE_KEY_PATH.exists():
+        print(f"Error: Private key file not found at {PRIVATE_KEY_PATH}")
+        print("Please ensure rsa_key.p8 exists in the parent directory")
+        sys.exit(1)
+    
     # Load configuration
-    config = load_config(args.config)
+    print("Loading configuration from config.json...")
+    config = load_config(CONFIG_PATH)
+    
+    # Check if account is configured
+    if config.get('account') == 'YOUR_ACCOUNT_IDENTIFIER':
+        print("Error: Please update the 'account' value in config.json")
+        print("Replace 'YOUR_ACCOUNT_IDENTIFIER' with your actual Snowflake account identifier")
+        sys.exit(1)
+    
+    print("✓ Configuration loaded successfully\n")
     
     # Upload receipts
     upload_receipts(config, args.directory, args.stage)
