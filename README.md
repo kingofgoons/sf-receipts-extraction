@@ -111,12 +111,36 @@ This will verify:
 - ✓ Database and schema access
 - ✓ Table creation permissions
 
+### Upload Receipts to Snowflake
+
+Upload receipt PDFs from the `receipts/` directory to Snowflake stage:
+
+```bash
+cd receipts-uploader
+
+# Upload all new receipts (skips already uploaded)
+python upload_receipts.py
+
+# Upload from custom directory
+python upload_receipts.py -d /path/to/receipts
+
+# Upload to custom stage
+python upload_receipts.py -s CUSTOM_DB.SCHEMA.STAGE
+```
+
+Features:
+- ✓ Automatically checks which files are already in the stage
+- ✓ Only uploads new/missing files (no duplicates)
+- ✓ Shows upload progress and summary
+- ✓ Uploads to `RECEIPTS_PROCESSING_DB.RAW.RECEIPTS` by default
+
 ### Files
 
 - `config.template.json` - Template for configuration
 - `config.json` - Your credentials (NOT tracked by git)
 - `create.service.user.sql` - Snowflake service account setup
 - `test_service_account.py` - Test service account connection
+- `upload_receipts.py` - Upload receipts to Snowflake stage
 - `requirements.txt` - Python dependencies
 
 ---
