@@ -118,6 +118,10 @@ Upload receipt PDFs from the `receipts/` directory to Snowflake stage:
 ```bash
 cd receipts-uploader
 
+# Activate virtual environment (if not already active)
+source venv/bin/activate  # On macOS/Linux
+# venv\Scripts\activate   # On Windows
+
 # Upload all new receipts (skips already uploaded)
 python upload_receipts.py
 
