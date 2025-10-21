@@ -79,6 +79,12 @@ processed_data/
 temp/
 cache/
 
+# Example and reference directories
+example.to.use/
+**/example.to.use/
+examples/
+samples/
+
 # Sensitive configuration and credentials
 config.json
 **/config.json
