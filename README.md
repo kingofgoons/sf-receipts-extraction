@@ -149,6 +149,50 @@ Features:
 
 ---
 
+## receipts-processor
+
+Process and extract structured data from receipt PDFs using Snowflake Document AI.
+
+### Setup
+
+1. **Run Snowflake setup script:**
+   - Execute `receipts-processor/setup.sql` in Snowflake
+   - Creates `RECEIPTS_PROCESSING_DB` database
+   - Creates `RAW` schema with `RECEIPTS` stage
+   - Grants permissions to `ETL_SERVICE_ROLE`
+
+2. **Use Snowflake Notebook:**
+   - Upload `receipts-processor/receipts-extractor.ipynb` to Snowflake
+   - Or copy cells into Snowflake Notebooks UI
+
+### Extract Receipt Data
+
+The `receipts-extractor.ipynb` Snowflake Notebook provides:
+
+1. **AI-Powered Parsing**: Uses `AI_PARSE_DOCUMENT` to extract text from PDFs
+2. **Structured Extraction**: Uses `AI_COMPLETE` with custom schema to extract:
+   - Vendor and transaction details
+   - Campaign information (display/video formats)
+   - Financial totals
+   - Performance metrics (CPM, CTR, Bounce Rate)
+   - Targeting parameters
+   - Line items
+3. **Analytics Tables**: Creates queryable tables for analysis
+4. **Example Queries**: Spending by vendor, campaign type analysis, pricing model comparison
+
+### Tables Created
+
+- `parsed_receipts` - Raw text extracted from PDFs
+- `extracted_receipt_data` - Structured JSON data
+- `receipt_analytics` - Flattened table ready for dashboards and reporting
+
+### Files
+
+- `setup.sql` - Snowflake database/schema/stage setup
+- `receipts-extractor.ipynb` - Snowflake Notebook for AI extraction
+
+---
+
 ## Installation
 
 ```bash
