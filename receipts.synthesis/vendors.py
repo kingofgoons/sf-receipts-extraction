@@ -44,90 +44,6 @@ class VendorTemplates:
         table.drawOn(c, x, y - len(data) * 25)
         return y - len(data) * 25 - 20
     
-    @staticmethod
-    def _draw_campaign_details(c, details, x, y, width=500, title_color=colors.black):
-        """Helper to draw campaign details section - compact version with proper spacing."""
-        # Save the starting y position
-        start_y = y
-        
-        # Title with background for better visibility (optional but helps)
-        c.setFillColor(title_color)
-        c.setFont("Helvetica-Bold", 9)
-        c.drawString(x, y, "CAMPAIGN DETAILS")
-        c.setFillColor(colors.black)
-        
-        # Move down to leave ample space for title 
-        # 9pt font ~= 12px actual height, need generous buffer for 5-row table
-        y -= 28  # Increased from 22 due to 5-row table (was 4 rows)
-        
-        # Create a more compact 2-column layout
-        col1_x = x
-        col2_x = x + (width / 2) + 5
-        col_width = (width / 2) - 5
-        
-        # Left column data
-        left_data = [
-            ['Period', f"{details['campaign_start_date']} to {details['campaign_end_date']} ({details['campaign_duration_days']}d)"],
-            ['Content', f"{details['content_types']} Ads"],
-            ['Display', details['display_formats']],
-            ['Video', details['video_formats']],
-            ['Pricing', f"{details['pricing_model']} - {details['rate_description']}"],
-        ]
-        
-        # Right column data  
-        right_data = [
-            ['Budget', f"${details['daily_budget']:.0f}/day (${details['total_budget']:,.0f} total)"],
-            ['Metrics', f"CPM ${details['cpm']:.2f} | CTR {details['ctr']:.1f}% | Bounce {details['bounce_rate']:.1f}%"],
-            ['Targets', f"{details['target_impressions']:,} imp / {details['target_clicks']:,} clicks"],
-            ['Geo', f"{details['geo_targets']}"],
-            ['Demo', f"{details['age_range']}, {details['devices']}"],
-        ]
-        
-        # Draw left column
-        left_table = Table(left_data, colWidths=[col_width*0.28, col_width*0.72])
-        left_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 7),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
-            ('TOPPADDING', (0, 0), (-1, -1), 2),
-            ('LEFTPADDING', (0, 0), (-1, -1), 3),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 3),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#F5F5F5'))
-        ]))
-        
-        # Draw right column
-        right_table = Table(right_data, colWidths=[col_width*0.28, col_width*0.72])
-        right_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 7),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
-            ('TOPPADDING', (0, 0), (-1, -1), 2),
-            ('LEFTPADDING', (0, 0), (-1, -1), 3),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 3),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#F5F5F5'))
-        ]))
-        
-        # Calculate height needed (5 rows × ~11px per row)
-        table_height = len(left_data) * 11
-        
-        # Position and draw both tables - positioned below title with proper clearance
-        left_table.wrapOn(c, col_width, 100)
-        left_table.drawOn(c, col1_x, y - table_height)
-        
-        right_table.wrapOn(c, col_width, 100)
-        right_table.drawOn(c, col2_x, y - table_height)
-        
-        # Return new y position (table height + small margin)
-        return y - table_height - 10
-    
     # Template 1: Modern Minimalist
     @staticmethod
     def template_1_techads_pro(c, data):
@@ -156,9 +72,31 @@ class VendorTemplates:
         # Line items
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Paragraph format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#0066CC'))
+        details = data['campaign_details']
+        details = data['campaign_details']
+        c.setFont("Helvetica-Bold", 9)
+        c.setFillColor(colors.HexColor('#0066CC'))
+        c.drawString(50, y, "CAMPAIGN DETAILS")
+        c.setFillColor(colors.black)
+        y -= 15
+        
+        c.setFont("Helvetica", 7)
+        # Paragraph style description
+        campaign_text = f"{details['content_types']} campaign from {details['campaign_start_date']} to {details['campaign_end_date']}. "
+        campaign_text += f"Budget: ${details['daily_budget']:.0f}/day. Pricing: {details['pricing_model']} at {details['rate_description']}. "
+        campaign_text += f"Metrics: CPM ${details['cpm']:.2f}, CTR {details['ctr']:.1f}%, Bounce {details['bounce_rate']:.1f}%. "
+        campaign_text += f"Targeting: {details['geo_targets']}, {details['age_range']}, {details['devices']}."
+        
+        # Wrap text
+        from reportlab.platypus import Paragraph
+        from reportlab.lib.styles import ParagraphStyle
+        style = ParagraphStyle('campaign', fontSize=7, leading=9)
+        para = Paragraph(campaign_text, style)
+        para.wrapOn(c, 500, 100)
+        para.drawOn(c, 50, y - 40)
+        y -= 50
         
         # Totals
         y -= 10
@@ -216,9 +154,27 @@ class VendorTemplates:
         # Line items
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Individual line items format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#1a1a1a'))
+        details = data['campaign_details']
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(50, y, "CAMPAIGN DETAILS:")
+        y -= 14
+        
+        c.setFont("Helvetica", 7)
+        c.drawString(50, y, f"CPM: ${details['cpm']:.2f}")
+        c.drawString(150, y, f"CTR: {details['ctr']:.1f}%")
+        c.drawString(250, y, f"Bounce Rate: {details['bounce_rate']:.1f}%")
+        y -= 10
+        c.drawString(50, y, f"Content: {details['content_types']}")
+        c.drawString(250, y, f"Model: {details['pricing_model']}")
+        y -= 10
+        c.drawString(50, y, f"Period: {details['campaign_start_date']} to {details['campaign_end_date']}")
+        y -= 10
+        c.drawString(50, y, f"Budget: ${details['daily_budget']:.0f}/day (${details['total_budget']:,.0f} total)")
+        y -= 10
+        c.drawString(50, y, f"Targeting: {details['geo_targets']}, {details['age_range']}")
+        y -= 15
         
         # Totals in a box
         y -= 10
@@ -269,9 +225,26 @@ class VendorTemplates:
         # Line items
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Bullet list format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#FF6B35'))
+        details = data['campaign_details']
+        c.setFont("Helvetica-Bold", 8)
+        c.setFillColor(colors.HexColor('#FF6B35'))
+        c.drawString(50, y, "• CAMPAIGN INFO")
+        c.setFillColor(colors.black)
+        y -= 12
+        
+        c.setFont("Helvetica", 7)
+        c.drawString(55, y, f"• {details['content_types']} | {details['pricing_model']} @ {details['rate_description']}")
+        y -= 9
+        c.drawString(55, y, f"• Period: {details['campaign_duration_days']} days | Budget ${details['total_budget']:,.0f}")
+        y -= 9
+        c.drawString(55, y, f"• Performance: CPM ${details['cpm']:.2f} | CTR {details['ctr']:.1f}% | Bounce {details['bounce_rate']:.1f}%")
+        y -= 9
+        c.drawString(55, y, f"• Target: {details['target_impressions']:,} impressions, {details['target_clicks']:,} clicks")
+        y -= 9
+        c.drawString(55, y, f"• Reach: {details['geo_targets']} | {details['age_range']} on {details['devices']}")
+        y -= 12
         
         # Totals with colored background
         y -= 10
@@ -323,11 +296,19 @@ class VendorTemplates:
         # Line items
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Box with key metrics
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y)
+        details = data['campaign_details']
+        c.setStrokeColor(colors.grey)
+        c.rect(50, y-50, 500, 50)
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(55, y-12, "METRICS")
+        c.setFont("Helvetica", 7)
+        c.drawString(55, y-22, f"CPM: ${details['cpm']:.2f} | CTR: {details['ctr']:.1f}% | Bounce: {details['bounce_rate']:.1f}%")
+        c.drawString(55, y-32, f"{details['content_types']} • {details['campaign_duration_days']} days • ${details['daily_budget']:.0f}/day")
+        c.drawString(55, y-42, f"{details['pricing_model']} • {details['geo_targets']}")
+        y -= 60
         
-        y -= 20
         c.line(350, y, 550, y)
         
         # Totals
@@ -382,9 +363,16 @@ class VendorTemplates:
         # Line items
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Single-line compact format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#8B5CF6'))
+        details = data['campaign_details']
+        c.setFont("Helvetica-Bold", 7)
+        c.drawString(50, y, "CAMPAIGN:")
+        c.setFont("Helvetica", 6)
+        y -= 10
+        compact = f"{details['content_types']} | {details['campaign_duration_days']}d | ${details['daily_budget']:.0f}/d | CPM ${details['cpm']:.2f} CTR {details['ctr']:.1f}% Bounce {details['bounce_rate']:.1f}% | {details['geo_targets']}"
+        c.drawString(50, y, compact)
+        y -= 12
         
         # Totals
         y -= 10
@@ -429,11 +417,17 @@ class VendorTemplates:
         y -= 45
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Colored inline format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#E91E63'))
+        details = data['campaign_details']
+        c.setFillColor(colors.HexColor('#FFE66D'))
+        c.rect(50, y-28, 500, 28, fill=True, stroke=False)
+        c.setFillColor(colors.black)
+        c.setFont("Helvetica-Bold", 7)
+        c.drawString(55, y-10, f"Campaign: {details['content_types']} • CPM ${details['cpm']:.2f} CTR {details['ctr']:.1f}% Bounce {details['bounce_rate']:.1f}%")
+        c.drawString(55, y-20, f"Budget: ${details['daily_budget']:.0f}/day • {details['pricing_model']} • {details['geo_targets']}, {details['age_range']}")
+        y -= 35
         
-        y -= 10
         c.setFont("Helvetica-Bold", 11)
         c.drawString(400, y, "Total:")
         c.drawString(500, y, f"${data['total']:.2f}")
@@ -464,11 +458,26 @@ class VendorTemplates:
         y -= 45
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Vertical key-value pairs
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#FFD700'))
+        details = data['campaign_details']
+        c.setFont("Courier-Bold", 8)
+        c.drawString(50, y, "CAMPAIGN DATA:")
+        y -= 12
+        c.setFont("Courier", 6)
+        c.drawString(50, y, f"Type........: {details['content_types']}")
+        y -= 8
+        c.drawString(50, y, f"CPM.........: ${details['cpm']:.2f}")
+        y -= 8
+        c.drawString(50, y, f"CTR.........: {details['ctr']:.1f}%")
+        y -= 8
+        c.drawString(50, y, f"Bounce......: {details['bounce_rate']:.1f}%")
+        y -= 8
+        c.drawString(50, y, f"Budget......: ${details['daily_budget']:.0f}/day")
+        y -= 8
+        c.drawString(50, y, f"Geography...: {details['geo_targets']}")
+        y -= 15
         
-        y -= 10
         c.setFillColor(colors.HexColor('#FFD700'))
         c.rect(380, y-45, 170, 45, fill=True, stroke=True)
         
@@ -511,11 +520,18 @@ class VendorTemplates:
         y -= 40
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Metrics-first format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#00BCD4'))
+        details = data['campaign_details']
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(50, y, f"CPM: ${details['cpm']:.2f}")
+        c.drawString(150, y, f"CTR: {details['ctr']:.1f}%")
+        c.drawString(250, y, f"BOUNCE: {details['bounce_rate']:.1f}%")
+        y -= 12
+        c.setFont("Helvetica", 7)
+        c.drawString(50, y, f"{details['content_types']} • ${details['daily_budget']:.0f}/day • {details['pricing_model']} • {details['geo_targets']}")
+        y -= 12
         
-        y -= 10
         c.setFont("Helvetica-Bold", 12)
         c.drawString(400, y, "TOTAL:")
         c.drawString(500, y, f"${data['total']:.2f}")
@@ -546,11 +562,21 @@ class VendorTemplates:
         y -= 60
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Boxed table format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#2C3E50'))
+        details = data['campaign_details']
+        c.setStrokeColor(colors.HexColor('#2C3E50'))
+        c.setLineWidth(2)
+        c.rect(50, y-55, 500, 55)
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(55, y-12, "CAMPAIGN")
+        c.setFont("Helvetica", 6)
+        c.drawString(55, y-22, f"Content: {details['content_types']} | Display: {details['display_formats'][:30]}...")
+        c.drawString(55, y-30, f"Metrics: CPM ${details['cpm']:.2f} | CTR {details['ctr']:.1f}% | Bounce {details['bounce_rate']:.1f}%")
+        c.drawString(55, y-38, f"Budget: ${details['daily_budget']:.0f}/day for {details['campaign_duration_days']} days")
+        c.drawString(55, y-46, f"Targeting: {details['geo_targets'][:40]}, {details['age_range']}, {details['devices']}")
+        y -= 65
         
-        y -= 10
         c.setFont("Helvetica-Bold", 11)
         c.drawString(400, y, "Amount Due:")
         c.drawString(500, y, f"${data['total']:.2f}")
@@ -587,11 +613,19 @@ class VendorTemplates:
         y -= 55
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Hashtag style format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#FF1744'))
-        
+        details = data['campaign_details']
+        c.setFont("Helvetica-BoldOblique", 8)
+        c.setFillColor(colors.HexColor('#FF1744'))
+        hashtags = f"#{details['content_types'].replace(' ', '')} #CPM{details['cpm']:.0f} #CTR{details['ctr']:.1f} #Bounce{details['bounce_rate']:.0f}"
+        c.drawString(50, y, hashtags)
         y -= 10
+        c.setFont("Helvetica", 7)
+        c.setFillColor(colors.black)
+        c.drawString(50, y, f"Campaign: ${details['daily_budget']:.0f}/day • {details['pricing_model']} • {details['campaign_duration_days']} days • {details['geo_targets']}")
+        y -= 12
+        
         c.setFont("Helvetica-Bold", 13)
         c.setFillColor(colors.HexColor('#FF1744'))
         c.drawString(400, y, "TOTAL:")
@@ -620,11 +654,26 @@ class VendorTemplates:
         y -= 90
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y, 450)
         
-        # Campaign details
+        # Campaign details - Code/data format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 450, colors.HexColor('#00897B'))
-        
+        details = data['campaign_details']
+        c.setFont("Courier-Bold", 7)
+        c.drawString(50, y, "[ CAMPAIGN_METRICS ]")
         y -= 10
+        c.setFont("Courier", 6)
+        c.drawString(50, y, f"  cpm........: {details['cpm']:.2f}")
+        y -= 8
+        c.drawString(50, y, f"  ctr........: {details['ctr']:.1f}")
+        y -= 8
+        c.drawString(50, y, f"  bounce.....: {details['bounce_rate']:.1f}")
+        y -= 8
+        c.drawString(50, y, f"  budget/day.: {details['daily_budget']:.0f}")
+        y -= 8
+        c.drawString(50, y, f"  type.......: {details['content_types']}")
+        y -= 8
+        c.drawString(50, y, f"  geography..: {details['geo_targets'][:30]}")
+        y -= 15
+        
         c.setFont("Courier-Bold", 11)
         c.drawString(350, y, "TOTAL_AMOUNT  :")
         c.drawString(470, y, f"${data['total']:.2f}")
@@ -656,11 +705,16 @@ class VendorTemplates:
         y -= 40
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Minimal badges format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#6200EA'))
+        details = data['campaign_details']
+        c.setFont("Helvetica", 6)
+        badges = f"[{details['content_types']}] [CPM: ${details['cpm']:.2f}] [CTR: {details['ctr']:.1f}%] [Bounce: {details['bounce_rate']:.1f}%] [{details['pricing_model']}]"
+        c.drawString(50, y, badges)
+        y -= 8
+        c.drawString(50, y, f"[${details['daily_budget']:.0f}/day] [{details['campaign_duration_days']}d] [{details['geo_targets'][:35]}]")
+        y -= 12
         
-        y -= 10
         c.setFont("Helvetica-Bold", 12)
         c.drawString(400, y, "Total:")
         c.drawString(500, y, f"${data['total']:.2f}")
@@ -688,11 +742,20 @@ class VendorTemplates:
         y = 668  # Start below the grid box
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Grid table format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#009688'))
-        
+        details = data['campaign_details']
+        c.setStrokeColor(colors.HexColor('#009688'))
+        c.setFont("Courier", 6)
+        c.drawString(50, y, f"CPM: ${details['cpm']:<6.2f} | CTR: {details['ctr']:<5.1f}% | Bounce: {details['bounce_rate']:<5.1f}%")
+        c.line(50, y-2, 550, y-2)
         y -= 10
+        c.drawString(50, y, f"Content: {details['content_types']:<20} Budget: ${details['daily_budget']:<8.0f}/day")
+        c.line(50, y-2, 550, y-2)
+        y -= 10
+        c.drawString(50, y, f"Geography: {details['geo_targets'][:50]}")
+        y -= 15
+        
         c.setFont("Helvetica-Bold", 11)
         c.drawString(400, y, "Total Amount:")
         c.drawString(500, y, f"${data['total']:.2f}")
@@ -725,11 +788,27 @@ class VendorTemplates:
         y -= 40
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Multi-column metrics format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#E91E63'))
-        
+        details = data['campaign_details']
+        c.setFont("Helvetica-Bold", 7)
+        c.drawString(50, y, "PERFORMANCE:")
+        c.drawString(200, y, "BUDGET:")
+        c.drawString(350, y, "TARGETING:")
         y -= 10
+        c.setFont("Helvetica", 6)
+        c.drawString(50, y, f"CPM ${details['cpm']:.2f}")
+        c.drawString(200, y, f"${details['daily_budget']:.0f}/day")
+        c.drawString(350, y, details['geo_targets'][:30])
+        y -= 8
+        c.drawString(50, y, f"CTR {details['ctr']:.1f}%")
+        c.drawString(200, y, f"${details['total_budget']:,.0f} total")
+        c.drawString(350, y, f"{details['age_range']}, {details['devices']}")
+        y -= 8
+        c.drawString(50, y, f"Bounce {details['bounce_rate']:.1f}%")
+        c.drawString(200, y, details['pricing_model'])
+        y -= 15
+        
         c.setFont("Helvetica-Bold", 12)
         c.setFillColor(colors.HexColor('#E91E63'))
         c.drawString(400, y, "Total:")
@@ -757,11 +836,20 @@ class VendorTemplates:
         y -= 40
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Bold stats format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#D32F2F'))
+        details = data['campaign_details']
+        c.setFont("Helvetica-Bold", 10)
+        c.setFillColor(colors.HexColor('#D32F2F'))
+        c.drawString(50, y, f"${details['cpm']:.2f} CPM")
+        c.drawString(150, y, f"{details['ctr']:.1f}% CTR")
+        c.drawString(250, y, f"{details['bounce_rate']:.1f}% BOUNCE")
+        c.setFillColor(colors.black)
+        y -= 14
+        c.setFont("Helvetica", 7)
+        c.drawString(50, y, f"{details['content_types']} • {details['campaign_duration_days']}d @ ${details['daily_budget']:.0f}/day • {details['geo_targets']}")
+        y -= 12
         
-        y -= 10
         c.setFont("Helvetica-Bold", 14)
         c.drawString(400, y, "TOTAL:")
         c.drawString(490, y, f"${data['total']:.2f}")
@@ -795,11 +883,19 @@ class VendorTemplates:
         y -= 40
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Simple list format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#388E3C'))
+        details = data['campaign_details']
+        c.setFont("Helvetica", 7)
+        c.drawString(50, y, f"Campaign: {details['content_types']} ({details['campaign_duration_days']} days)")
+        y -= 9
+        c.drawString(50, y, f"Performance: CPM ${details['cpm']:.2f}, CTR {details['ctr']:.1f}%, Bounce {details['bounce_rate']:.1f}%")
+        y -= 9
+        c.drawString(50, y, f"Budget: ${details['daily_budget']:.0f}/day ({details['pricing_model']})")
+        y -= 9
+        c.drawString(50, y, f"Target: {details['geo_targets']}, {details['age_range']}, {details['devices']}")
+        y -= 15
         
-        y -= 10
         c.setFillColor(colors.HexColor('#388E3C'))
         c.setFont("Helvetica-Bold", 13)
         c.drawString(400, y, "Total:")
@@ -831,11 +927,22 @@ class VendorTemplates:
         y -= 70
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Lab report format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#00897B'))
-        
+        details = data['campaign_details']
+        c.setFont("Courier-Bold", 7)
+        c.drawString(50, y, "[ EXPERIMENT PARAMETERS ]")
         y -= 10
+        c.setFont("Courier", 6)
+        c.drawString(50, y, f"METRIC_CPM......: ${details['cpm']:>6.2f}  |  METRIC_CTR.....: {details['ctr']:>5.1f}%  |  BOUNCE........: {details['bounce_rate']:>5.1f}%")
+        y -= 8
+        c.drawString(50, y, f"CONTENT_TYPE....: {details['content_types']:<20}  |  PRICING_MODEL.: {details['pricing_model']}")
+        y -= 8
+        c.drawString(50, y, f"DAILY_BUDGET....: ${details['daily_budget']:>7.0f}  |  CAMPAIGN_DAYS.: {details['campaign_duration_days']:>4} days")
+        y -= 8
+        c.drawString(50, y, f"GEO_TARGETS.....: {details['geo_targets'][:45]}")
+        y -= 15
+        
         c.setFont("Courier-Bold", 11)
         c.drawString(400, y, "TOTAL COST :")
         c.drawString(500, y, f"${data['total']:.2f}")
@@ -874,11 +981,24 @@ class VendorTemplates:
         y -= 40
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Arrow/trend format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#FF6F00'))
+        details = data['campaign_details']
+        c.setFont("Helvetica-Bold", 8)
+        c.setFillColor(colors.HexColor('#FF6F00'))
+        c.drawString(50, y, "↗ CAMPAIGN METRICS")
+        c.setFillColor(colors.black)
+        y -= 12
+        c.setFont("Helvetica", 7)
+        c.drawString(55, y, f"→ CPM: ${details['cpm']:.2f} | CTR: {details['ctr']:.1f}% | Bounce: {details['bounce_rate']:.1f}%")
+        y -= 9
+        c.drawString(55, y, f"→ {details['content_types']} Campaign | {details['pricing_model']} Pricing")
+        y -= 9
+        c.drawString(55, y, f"→ Budget: ${details['daily_budget']:.0f}/day × {details['campaign_duration_days']} days = ${details['total_budget']:,.0f}")
+        y -= 9
+        c.drawString(55, y, f"→ Targeting: {details['geo_targets']}, {details['age_range']}")
+        y -= 15
         
-        y -= 10
         c.setFont("Helvetica-Bold", 12)
         c.drawString(400, y, "Total:")
         c.drawString(490, y, f"${data['total']:.2f}")
@@ -910,11 +1030,23 @@ class VendorTemplates:
         y -= 55
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - ROI-focused format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#FFD700'))
+        details = data['campaign_details']
+        c.setFont("Helvetica-Bold", 9)
+        c.setFillColor(colors.HexColor('#FFD700'))
+        c.drawString(50, y, "ROI METRICS:")
+        c.setFillColor(colors.black)
+        y -= 12
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(50, y, f"CPM: ${details['cpm']:.2f}")
+        c.drawString(150, y, f"CTR: {details['ctr']:.1f}%")
+        c.drawString(250, y, f"Bounce: {details['bounce_rate']:.1f}%")
+        y -= 11
+        c.setFont("Helvetica", 6)
+        c.drawString(50, y, f"{details['content_types']} • ${details['daily_budget']:.0f}/day • {details['pricing_model']} • {details['geo_targets'][:35]}")
+        y -= 12
         
-        y -= 10
         c.setFillColor(colors.HexColor('#FFD700'))
         c.rect(380, y-35, 170, 35, fill=True, stroke=True)
         
@@ -955,11 +1087,22 @@ class VendorTemplates:
         y -= 40
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Wave/flowing format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#00ACC1'))
+        details = data['campaign_details']
+        c.setFont("Helvetica-Oblique", 8)
+        c.setFillColor(colors.HexColor('#00ACC1'))
+        c.drawString(50, y, f"~ {details['content_types']} Campaign ~")
+        c.setFillColor(colors.black)
+        y -= 11
+        c.setFont("Helvetica", 6)
+        c.drawString(50, y, f"~ Metrics: CPM ${details['cpm']:.2f} ~ CTR {details['ctr']:.1f}% ~ Bounce {details['bounce_rate']:.1f}% ~")
+        y -= 8
+        c.drawString(50, y, f"~ Budget: ${details['daily_budget']:.0f}/day for {details['campaign_duration_days']} days ~ {details['pricing_model']} ~")
+        y -= 8
+        c.drawString(50, y, f"~ Reach: {details['geo_targets']}, {details['age_range']} on {details['devices']} ~")
+        y -= 15
         
-        y -= 10
         c.setFont("Helvetica-Bold", 12)
         c.setFillColor(colors.HexColor('#00ACC1'))
         c.drawString(400, y, "TOTAL:")
@@ -994,11 +1137,22 @@ class VendorTemplates:
         y -= 40
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Circular/360 format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#5E35B1'))
+        details = data['campaign_details']
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(50, y, "360° CAMPAIGN VIEW")
+        y -= 11
+        c.setFont("Helvetica", 6)
+        c.drawString(50, y, f"○ Performance: CPM ${details['cpm']:.2f} • CTR {details['ctr']:.1f}% • Bounce {details['bounce_rate']:.1f}%")
+        y -= 8
+        c.drawString(50, y, f"○ Investment: ${details['daily_budget']:.0f}/day • {details['campaign_duration_days']} days • {details['pricing_model']}")
+        y -= 8
+        c.drawString(50, y, f"○ Content: {details['content_types']} • {details['display_formats'][:35] if details['display_formats'] != 'N/A' else details['video_formats'][:35]}")
+        y -= 8
+        c.drawString(50, y, f"○ Audience: {details['geo_targets']}, {details['age_range']}, {details['devices']}")
+        y -= 15
         
-        y -= 10
         c.setFont("Helvetica-Bold", 12)
         c.drawString(400, y, "Total:")
         c.drawString(490, y, f"${data['total']:.2f}")
@@ -1028,11 +1182,22 @@ class VendorTemplates:
         y -= 55
         y = VendorTemplates._draw_line_items(c, data['line_items'], 50, y)
         
-        # Campaign details
+        # Campaign details - Plus/positive format
         y -= 15
-        y = VendorTemplates._draw_campaign_details(c, data['campaign_details'], 50, y, 500, colors.HexColor('#43A047'))
+        details = data['campaign_details']
+        c.setFont("Helvetica-Bold", 8)
+        c.setFillColor(colors.HexColor('#43A047'))
+        c.drawString(50, y, "+ CAMPAIGN BOOST +")
+        c.setFillColor(colors.black)
+        y -= 11
+        c.setFont("Helvetica", 7)
+        c.drawString(50, y, f"+ CPM: ${details['cpm']:.2f} + CTR: {details['ctr']:.1f}% + Bounce: {details['bounce_rate']:.1f}%")
+        y -= 9
+        c.drawString(50, y, f"+ {details['content_types']} + {details['pricing_model']} + ${details['daily_budget']:.0f}/day")
+        y -= 9
+        c.drawString(50, y, f"+ {details['campaign_duration_days']} days + {details['geo_targets'][:40]}")
+        y -= 15
         
-        y -= 10
         c.setFont("Helvetica-Bold", 13)
         c.setFillColor(colors.HexColor('#43A047'))
         c.drawString(400, y, "TOTAL+:")
