@@ -956,6 +956,8 @@ class VendorTemplates:
         c.drawString(50, y, "[ EXPERIMENT PARAMETERS ]")
         y -= 10
         c.setFont("Courier", 8)
+        c.drawString(50, y, f"START_DATE......: {details['campaign_start_date']:<12}  |  END_DATE......: {details['campaign_end_date']}")
+        y -= 8
         c.drawString(50, y, f"METRIC_CPM......: ${details['cpm']:>6.2f}  |  METRIC_CTR.....: {details['ctr']:>5.1f}%  |  BOUNCE........: {details['bounce_rate']:>5.1f}%")
         y -= 8
         c.drawString(50, y, f"CONTENT_TYPE....: {details['content_types']:<20}  |  PRICING_MODEL.: {details['pricing_model']}")
