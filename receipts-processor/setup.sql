@@ -8,10 +8,23 @@
 -- ============================================================================
 
 -- ============================================================================
--- 1. Create Database and Schema (as SYSADMIN)
+-- 1. Create Warehouse for Receipt Processing (as SYSADMIN)
 -- ============================================================================
 
 USE ROLE SYSADMIN;
+
+-- Create dedicated warehouse for receipt parsing and AI completion
+CREATE WAREHOUSE IF NOT EXISTS RECEIPTS_PARSE_COMPLETE_WH
+  WITH 
+    WAREHOUSE_SIZE = 'XSMALL'
+    AUTO_SUSPEND = 60
+    AUTO_RESUME = TRUE
+    INITIALLY_SUSPENDED = TRUE
+  COMMENT = 'Warehouse for receipts-extractor notebook AI parsing and completion';
+
+-- ============================================================================
+-- 2. Create Database and Schema (as SYSADMIN)
+-- ============================================================================
 
 -- Create the main database for receipt processing
 CREATE DATABASE IF NOT EXISTS RECEIPTS_PROCESSING_DB
@@ -28,7 +41,7 @@ CREATE SCHEMA IF NOT EXISTS RAW
 USE SCHEMA RAW;
 
 -- ============================================================================
--- 2. Create Stage for Receipt Files
+-- 3. Create Stage for Receipt Files
 -- ============================================================================
 
 -- Create internal stage for receipt PDFs
@@ -41,10 +54,13 @@ CREATE STAGE IF NOT EXISTS RECEIPTS
 ALTER STAGE RECEIPTS REFRESH;
 
 -- ============================================================================
--- 3. Grant Permissions to ETL_SERVICE_ROLE (as ACCOUNTADMIN)
+-- 4. Grant Permissions to ETL_SERVICE_ROLE (as ACCOUNTADMIN)
 -- ============================================================================
 
 USE ROLE ACCOUNTADMIN;
+
+-- Grant warehouse usage for receipt processing
+GRANT USAGE ON WAREHOUSE RECEIPTS_PARSE_COMPLETE_WH TO ROLE ETL_SERVICE_ROLE;
 
 -- Grant database usage
 GRANT USAGE ON DATABASE RECEIPTS_PROCESSING_DB TO ROLE ETL_SERVICE_ROLE;
@@ -63,7 +79,7 @@ GRANT WRITE ON STAGE RECEIPTS_PROCESSING_DB.RAW.RECEIPTS TO ROLE ETL_SERVICE_ROL
 GRANT ALL PRIVILEGES ON STAGE RECEIPTS_PROCESSING_DB.RAW.RECEIPTS TO ROLE ETL_SERVICE_ROLE;
 
 -- ============================================================================
--- 4. Optional: Create Stream on Stage for Automated Processing (as SYSADMIN)
+-- 5. Optional: Create Stream on Stage for Automated Processing (as SYSADMIN)
 -- ============================================================================
 
 USE ROLE SYSADMIN;
@@ -80,12 +96,13 @@ USE ROLE ACCOUNTADMIN;
 GRANT SELECT ON STREAM RECEIPTS_PROCESSING_DB.RAW.RECEIPTS_STREAM TO ROLE ETL_SERVICE_ROLE;
 
 -- ============================================================================
--- 5. Verify Setup
+-- 6. Verify Setup
 -- ============================================================================
 
 USE ROLE SYSADMIN;
 
 -- Show created objects
+SHOW WAREHOUSES LIKE 'RECEIPTS_PARSE_COMPLETE_WH';
 SHOW DATABASES LIKE 'RECEIPTS_PROCESSING_DB';
 SHOW SCHEMAS IN DATABASE RECEIPTS_PROCESSING_DB;
 SHOW STAGES IN SCHEMA RECEIPTS_PROCESSING_DB.RAW;
@@ -101,6 +118,7 @@ SHOW GRANTS TO ROLE ETL_SERVICE_ROLE;
 
 -- Display summary
 SELECT 'Setup complete!' AS status,
+       'RECEIPTS_PARSE_COMPLETE_WH' AS warehouse_name,
        'RECEIPTS_PROCESSING_DB' AS database_name,
        'RAW' AS schema_name,
        'RECEIPTS' AS stage_name,
