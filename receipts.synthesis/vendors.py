@@ -300,14 +300,15 @@ class VendorTemplates:
         y -= 15
         details = data['campaign_details']
         c.setStrokeColor(colors.grey)
-        c.rect(50, y-50, 500, 50)
+        c.rect(50, y-60, 500, 60)
         c.setFont("Helvetica-Bold", 8)
-        c.drawString(55, y-12, "METRICS")
+        c.drawString(55, y-12, "CAMPAIGN METRICS")
         c.setFont("Helvetica", 8)
         c.drawString(55, y-22, f"CPM: ${details['cpm']:.2f} | CTR: {details['ctr']:.1f}% | Bounce: {details['bounce_rate']:.1f}%")
         c.drawString(55, y-32, f"{details['content_types']} • {details['campaign_duration_days']} days • ${details['daily_budget']:.0f}/day")
-        c.drawString(55, y-42, f"{details['pricing_model']} • {details['geo_targets']}")
-        y -= 60
+        c.drawString(55, y-42, f"Period: {details['campaign_start_date']} to {details['campaign_end_date']}")
+        c.drawString(55, y-52, f"{details['pricing_model']} • {details['geo_targets']}")
+        y -= 70
         
         c.line(350, y, 550, y)
         
@@ -317,7 +318,9 @@ class VendorTemplates:
         c.drawRightString(545, y-15, f"${data['subtotal']:.2f}")
         c.drawString(400, y-30, "Tax:")
         c.drawRightString(545, y-30, f"${data['tax']:.2f}")
+        c.drawString(50, y, f"Campaign Period: {details['campaign_start_date']} to {details['campaign_end_date']}")
         
+        y -= 12
         c.setFont("Helvetica-Bold", 12)
         c.drawString(400, y-50, "TOTAL DUE:")
         c.drawRightString(545, y-50, f"${data['total']:.2f}")
@@ -370,7 +373,7 @@ class VendorTemplates:
         c.drawString(50, y, "CAMPAIGN:")
         c.setFont("Helvetica", 8)
         y -= 10
-        compact = f"{details['content_types']} | {details['campaign_duration_days']}d | ${details['daily_budget']:.0f}/d | CPM ${details['cpm']:.2f} CTR {details['ctr']:.1f}% Bounce {details['bounce_rate']:.1f}% | {details['geo_targets']}"
+        compact = f"{details['content_types']} | {details['campaign_start_date']} to {details['campaign_end_date']} | CPM ${details['cpm']:.2f} CTR {details['ctr']:.1f}% | {details['geo_targets']}"
         c.drawString(50, y, compact)
         y -= 12
         
@@ -421,12 +424,13 @@ class VendorTemplates:
         y -= 15
         details = data['campaign_details']
         c.setFillColor(colors.HexColor('#FFE66D'))
-        c.rect(50, y-28, 500, 28, fill=True, stroke=False)
+        c.rect(50, y-38, 500, 38, fill=True, stroke=False)
         c.setFillColor(colors.black)
         c.setFont("Helvetica-Bold", 8)
         c.drawString(55, y-10, f"Campaign: {details['content_types']} • CPM ${details['cpm']:.2f} CTR {details['ctr']:.1f}% Bounce {details['bounce_rate']:.1f}%")
-        c.drawString(55, y-20, f"Budget: ${details['daily_budget']:.0f}/day • {details['pricing_model']} • {details['geo_targets']}, {details['age_range']}")
-        y -= 35
+        c.drawString(55, y-20, f"Period: {details['campaign_start_date']} to {details['campaign_end_date']}")
+        c.drawString(55, y-30, f"Budget: ${details['daily_budget']:.0f}/day • {details['pricing_model']} • {details['geo_targets']}, {details['age_range']}")
+        y -= 45
         
         c.setFont("Helvetica-Bold", 11)
         c.drawString(400, y, "Total:")
@@ -466,6 +470,10 @@ class VendorTemplates:
         y -= 12
         c.setFont("Courier", 8)
         c.drawString(50, y, f"Type........: {details['content_types']}")
+        y -= 8
+        c.drawString(50, y, f"Start-Date..: {details['campaign_start_date']}")
+        y -= 8
+        c.drawString(50, y, f"End-Date....: {details['campaign_end_date']}")
         y -= 8
         c.drawString(50, y, f"CPM.........: ${details['cpm']:.2f}")
         y -= 8
@@ -529,7 +537,9 @@ class VendorTemplates:
         c.drawString(250, y, f"BOUNCE: {details['bounce_rate']:.1f}%")
         y -= 12
         c.setFont("Helvetica", 8)
-        c.drawString(50, y, f"{details['content_types']} • ${details['daily_budget']:.0f}/day • {details['pricing_model']} • {details['geo_targets']}")
+        c.drawString(50, y, f"{details['content_types']} • {details['campaign_start_date']} to {details['campaign_end_date']}")
+        y -= 10
+        c.drawString(50, y, f"${details['daily_budget']:.0f}/day • {details['pricing_model']} • {details['geo_targets']}")
         y -= 12
         
         c.setFont("Helvetica-Bold", 12)
@@ -567,15 +577,16 @@ class VendorTemplates:
         details = data['campaign_details']
         c.setStrokeColor(colors.HexColor('#2C3E50'))
         c.setLineWidth(2)
-        c.rect(50, y-55, 500, 55)
+        c.rect(50, y-65, 500, 65)
         c.setFont("Helvetica-Bold", 8)
         c.drawString(55, y-12, "CAMPAIGN")
         c.setFont("Helvetica", 8)
         c.drawString(55, y-22, f"Content: {details['content_types']} | Display: {details['display_formats'][:30]}...")
-        c.drawString(55, y-30, f"Metrics: CPM ${details['cpm']:.2f} | CTR {details['ctr']:.1f}% | Bounce {details['bounce_rate']:.1f}%")
-        c.drawString(55, y-38, f"Budget: ${details['daily_budget']:.0f}/day for {details['campaign_duration_days']} days")
-        c.drawString(55, y-46, f"Targeting: {details['geo_targets'][:40]}, {details['age_range']}, {details['devices']}")
-        y -= 65
+        c.drawString(55, y-30, f"Period: {details['campaign_start_date']} to {details['campaign_end_date']}")
+        c.drawString(55, y-38, f"Metrics: CPM ${details['cpm']:.2f} | CTR {details['ctr']:.1f}% | Bounce {details['bounce_rate']:.1f}%")
+        c.drawString(55, y-46, f"Budget: ${details['daily_budget']:.0f}/day for {details['campaign_duration_days']} days")
+        c.drawString(55, y-54, f"Targeting: {details['geo_targets'][:40]}, {details['age_range']}, {details['devices']}")
+        y -= 75
         
         c.setFont("Helvetica-Bold", 11)
         c.drawString(400, y, "Amount Due:")
@@ -623,7 +634,9 @@ class VendorTemplates:
         y -= 10
         c.setFont("Helvetica", 8)
         c.setFillColor(colors.black)
-        c.drawString(50, y, f"Campaign: ${details['daily_budget']:.0f}/day • {details['pricing_model']} • {details['campaign_duration_days']} days • {details['geo_targets']}")
+        c.drawString(50, y, f"Campaign: {details['campaign_start_date']} to {details['campaign_end_date']} • ${details['daily_budget']:.0f}/day • {details['pricing_model']}")
+        y -= 10
+        c.drawString(50, y, f"{details['campaign_duration_days']} days • {details['geo_targets']}")
         y -= 12
         
         c.setFont("Helvetica-Bold", 13)
@@ -661,6 +674,10 @@ class VendorTemplates:
         c.drawString(50, y, "[ CAMPAIGN_METRICS ]")
         y -= 10
         c.setFont("Courier", 8)
+        c.drawString(50, y, f"  start_date.: {details['campaign_start_date']}")
+        y -= 8
+        c.drawString(50, y, f"  end_date...: {details['campaign_end_date']}")
+        y -= 8
         c.drawString(50, y, f"  cpm........: {details['cpm']:.2f}")
         y -= 8
         c.drawString(50, y, f"  ctr........: {details['ctr']:.1f}")
@@ -712,7 +729,7 @@ class VendorTemplates:
         badges = f"[{details['content_types']}] [CPM: ${details['cpm']:.2f}] [CTR: {details['ctr']:.1f}%] [Bounce: {details['bounce_rate']:.1f}%] [{details['pricing_model']}]"
         c.drawString(50, y, badges)
         y -= 8
-        c.drawString(50, y, f"[${details['daily_budget']:.0f}/day] [{details['campaign_duration_days']}d] [{details['geo_targets'][:35]}]")
+        c.drawString(50, y, f"[{details['campaign_start_date']}] to [{details['campaign_end_date']}] • [${details['daily_budget']:.0f}/day] [{details['geo_targets'][:30]}]")
         y -= 12
         
         c.setFont("Helvetica-Bold", 12)
@@ -807,6 +824,9 @@ class VendorTemplates:
         y -= 8
         c.drawString(50, y, f"Bounce {details['bounce_rate']:.1f}%")
         c.drawString(200, y, details['pricing_model'])
+        y -= 8
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(50, y, f"Campaign Period: {details['campaign_start_date']} to {details['campaign_end_date']}")
         y -= 15
         
         c.setFont("Helvetica-Bold", 12)
@@ -848,6 +868,8 @@ class VendorTemplates:
         y -= 14
         c.setFont("Helvetica", 8)
         c.drawString(50, y, f"{details['content_types']} • {details['campaign_duration_days']}d @ ${details['daily_budget']:.0f}/day • {details['geo_targets']}")
+        y -= 10
+        c.drawString(50, y, f"Campaign Period: {details['campaign_start_date']} to {details['campaign_end_date']}")
         y -= 12
         
         c.setFont("Helvetica-Bold", 14)
@@ -997,6 +1019,8 @@ class VendorTemplates:
         c.drawString(55, y, f"→ Budget: ${details['daily_budget']:.0f}/day × {details['campaign_duration_days']} days = ${details['total_budget']:,.0f}")
         y -= 9
         c.drawString(55, y, f"→ Targeting: {details['geo_targets']}, {details['age_range']}")
+        y -= 9
+        c.drawString(55, y, f"→ Period: {details['campaign_start_date']} to {details['campaign_end_date']}")
         y -= 15
         
         c.setFont("Helvetica-Bold", 12)
@@ -1045,6 +1069,8 @@ class VendorTemplates:
         y -= 11
         c.setFont("Helvetica", 8)
         c.drawString(50, y, f"{details['content_types']} • ${details['daily_budget']:.0f}/day • {details['pricing_model']} • {details['geo_targets'][:35]}")
+        y -= 9
+        c.drawString(50, y, f"Period: {details['campaign_start_date']} - {details['campaign_end_date']}")
         y -= 12
         
         c.setFillColor(colors.HexColor('#FFD700'))
@@ -1101,6 +1127,8 @@ class VendorTemplates:
         c.drawString(50, y, f"~ Budget: ${details['daily_budget']:.0f}/day for {details['campaign_duration_days']} days ~ {details['pricing_model']} ~")
         y -= 8
         c.drawString(50, y, f"~ Reach: {details['geo_targets']}, {details['age_range']} on {details['devices']} ~")
+        y -= 8
+        c.drawString(50, y, f"~ Period: {details['campaign_start_date']} ~ {details['campaign_end_date']} ~")
         y -= 15
         
         c.setFont("Helvetica-Bold", 12)
@@ -1151,6 +1179,8 @@ class VendorTemplates:
         c.drawString(50, y, f"○ Content: {details['content_types']} • {details['display_formats'][:35] if details['display_formats'] != 'N/A' else details['video_formats'][:35]}")
         y -= 8
         c.drawString(50, y, f"○ Audience: {details['geo_targets']}, {details['age_range']}, {details['devices']}")
+        y -= 8
+        c.drawString(50, y, f"○ Period: {details['campaign_start_date']} to {details['campaign_end_date']}")
         y -= 15
         
         c.setFont("Helvetica-Bold", 12)
@@ -1196,6 +1226,8 @@ class VendorTemplates:
         c.drawString(50, y, f"+ {details['content_types']} + {details['pricing_model']} + ${details['daily_budget']:.0f}/day")
         y -= 9
         c.drawString(50, y, f"+ {details['campaign_duration_days']} days + {details['geo_targets'][:40]}")
+        y -= 9
+        c.drawString(50, y, f"+ Period: {details['campaign_start_date']} to {details['campaign_end_date']}")
         y -= 15
         
         c.setFont("Helvetica-Bold", 13)
