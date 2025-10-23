@@ -764,6 +764,9 @@ class VendorTemplates:
         details = data['campaign_details']
         c.setStrokeColor(colors.HexColor('#009688'))
         c.setFont("Courier", 8)
+        c.drawString(50, y, f"Campaign-Start: {details['campaign_start_date']:<12} | Campaign-End: {details['campaign_end_date']}")
+        c.line(50, y-2, 550, y-2)
+        y -= 10
         c.drawString(50, y, f"CPM: ${details['cpm']:<6.2f} | CTR: {details['ctr']:<5.1f}% | Bounce: {details['bounce_rate']:<5.1f}%")
         c.line(50, y-2, 550, y-2)
         y -= 10
@@ -910,6 +913,8 @@ class VendorTemplates:
         details = data['campaign_details']
         c.setFont("Helvetica", 8)
         c.drawString(50, y, f"Campaign: {details['content_types']} ({details['campaign_duration_days']} days)")
+        y -= 9
+        c.drawString(50, y, f"Period: {details['campaign_start_date']} to {details['campaign_end_date']}")
         y -= 9
         c.drawString(50, y, f"Performance: CPM ${details['cpm']:.2f}, CTR {details['ctr']:.1f}%, Bounce {details['bounce_rate']:.1f}%")
         y -= 9
