@@ -35,7 +35,7 @@ class VendorTemplatesV2:
         c.setFillColor(colors.HexColor('#2C5AA0'))
         c.drawString(x, y, table_data['name'])
         c.setFillColor(colors.black)
-        y -= 18  # Small gap between title and table
+        y -= 5  # Minimal gap between title and table
         
         # Build table data
         data = [['Market', 'Minimum (USD)', 'Reach']]
@@ -94,10 +94,12 @@ class VendorTemplatesV2:
         
         y -= 90
         
-        # Draw each pricing table
+        # Pricing section header
         c.setFont("Helvetica-Bold", 13)
-        c.drawString(50, y, "PRICING TABLES")
-        y -= 25
+        c.setFillColor(colors.HexColor('#2C5AA0'))
+        c.drawString(50, y, "PRICING")
+        c.setFillColor(colors.black)
+        y -= 20
         
         for table in data['pricing_tables']:
             y = VendorTemplatesV2._draw_pricing_table(c, table, 50, y, 500)
@@ -148,6 +150,13 @@ class VendorTemplatesV2:
         c.drawString(50, y-24, f"Campaign: {data['campaign_name']}")
         
         y -= 50
+        
+        # Pricing section header
+        c.setFont("Helvetica-Bold", 12)
+        c.setFillColor(colors.HexColor('#555555'))
+        c.drawString(50, y, "PRICING")
+        c.setFillColor(colors.black)
+        y -= 20
         
         # Pricing tables with gray theme
         for table in data['pricing_tables']:
@@ -206,6 +215,13 @@ class VendorTemplatesV2:
         c.drawString(50, y, f"CAMPAIGN: {data['campaign_name']}")
         
         y -= 30
+        
+        # Pricing section header
+        c.setFont("Helvetica-Bold", 14)
+        c.setFillColor(colors.HexColor('#FF6600'))
+        c.drawString(50, y, "PRICING")
+        c.setFillColor(colors.black)
+        y -= 20
         
         # Pricing tables
         for i, table in enumerate(data['pricing_tables']):
