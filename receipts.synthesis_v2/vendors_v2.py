@@ -30,10 +30,12 @@ class VendorTemplatesV2:
         Returns:
             New y position after table
         """
-        # Table title
+        # Table title - directly above the table
         c.setFont("Helvetica-Bold", 11)
+        c.setFillColor(colors.HexColor('#2C5AA0'))
         c.drawString(x, y, table_data['name'])
-        y -= 20
+        c.setFillColor(colors.black)
+        y -= 18  # Small gap between title and table
         
         # Build table data
         data = [['Market', 'Minimum (USD)', 'Reach']]
@@ -58,10 +60,13 @@ class VendorTemplatesV2:
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F0F0F0')])
         ]))
         
+        # Calculate table height and draw it directly below the title
+        table_height = len(data) * 22
         table.wrapOn(c, width, 400)
-        new_y = y - (len(data) * 22) - 10
-        table.drawOn(c, x, new_y)
-        return new_y - 15
+        table.drawOn(c, x, y - table_height)
+        
+        # Return new y position with spacing after table
+        return y - table_height - 20
     
     # Template 1: Modern Blue
     @staticmethod
