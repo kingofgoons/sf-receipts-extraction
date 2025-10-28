@@ -95,8 +95,43 @@ CREATE STREAM IF NOT EXISTS RECEIPTS_STREAM
 USE ROLE ACCOUNTADMIN;
 GRANT SELECT ON STREAM RECEIPTS_PROCESSING_DB.RAW.RECEIPTS_STREAM TO ROLE ETL_SERVICE_ROLE;
 
+-- Grant task execution permissions
+GRANT EXECUTE TASK ON ACCOUNT TO ROLE ETL_SERVICE_ROLE;
+GRANT EXECUTE MANAGED TASK ON ACCOUNT TO ROLE ETL_SERVICE_ROLE;
+
+-- Grant schema permissions for task creation (switch to SYSADMIN)
+USE ROLE SYSADMIN;
+GRANT CREATE TASK ON SCHEMA RECEIPTS_PROCESSING_DB.RAW TO ROLE ETL_SERVICE_ROLE;
+
 -- ============================================================================
--- 6. Verify Setup
+-- 6. Create Automated Processing Task
+-- ============================================================================
+-- This task automatically executes the AI_EXTRACT notebook when new files arrive
+
+USE ROLE SYSADMIN;
+USE DATABASE RECEIPTS_PROCESSING_DB;
+USE SCHEMA RAW;
+
+-- Create task to process new receipts automatically
+-- Note: The notebook 'receipts-extractor_ai_extract' must exist in RECEIPTS_PROCESSING_DB.RAW
+CREATE TASK IF NOT EXISTS AUTO_PROCESS_NEW_RECEIPTS
+  WAREHOUSE = RECEIPTS_PARSE_COMPLETE_WH
+  SCHEDULE = '1 MINUTE'
+  COMMENT = 'Automatically process new receipt files using AI_EXTRACT notebook'
+  WHEN SYSTEM$STREAM_HAS_DATA('RECEIPTS_STREAM')
+AS
+  EXECUTE NOTEBOOK RECEIPTS_PROCESSING_DB.RAW.receipts_extractor_ai_extract();
+
+-- Grant permissions on the task (as ACCOUNTADMIN)
+USE ROLE ACCOUNTADMIN;
+GRANT OWNERSHIP ON TASK RECEIPTS_PROCESSING_DB.RAW.AUTO_PROCESS_NEW_RECEIPTS TO ROLE ETL_SERVICE_ROLE;
+
+-- Note: The task is created in SUSPENDED state by default
+-- To start automated processing, run:
+-- ALTER TASK RECEIPTS_PROCESSING_DB.RAW.AUTO_PROCESS_NEW_RECEIPTS RESUME;
+
+-- ============================================================================
+-- 7. Verify Setup
 -- ============================================================================
 
 USE ROLE SYSADMIN;
@@ -107,6 +142,7 @@ SHOW DATABASES LIKE 'RECEIPTS_PROCESSING_DB';
 SHOW SCHEMAS IN DATABASE RECEIPTS_PROCESSING_DB;
 SHOW STAGES IN SCHEMA RECEIPTS_PROCESSING_DB.RAW;
 SHOW STREAMS IN SCHEMA RECEIPTS_PROCESSING_DB.RAW;
+SHOW TASKS IN SCHEMA RECEIPTS_PROCESSING_DB.RAW;
 
 -- Show grants for ETL_SERVICE_ROLE (requires ACCOUNTADMIN)
 USE ROLE ACCOUNTADMIN;
@@ -123,6 +159,8 @@ SELECT 'Setup complete!' AS status,
        'RAW' AS schema_name,
        'RECEIPTS' AS stage_name,
        'RECEIPTS_STREAM' AS stream_name,
+       'AUTO_PROCESS_NEW_RECEIPTS' AS task_name,
+       'receipts_extractor_ai_extract' AS notebook_name,
        'ETL_SERVICE_ROLE' AS role_with_access;
 
 -- ============================================================================
@@ -144,5 +182,32 @@ SELECT * FROM RECEIPTS_PROCESSING_DB.RAW.RECEIPTS_STREAM;
 
 -- To remove a file from the stage:
 REMOVE @RECEIPTS_PROCESSING_DB.RAW.RECEIPTS/receipt_filename.pdf;
+
+-- ============================================================================
+-- Task Management
+-- ============================================================================
+
+-- Start automated processing (resume the task):
+ALTER TASK RECEIPTS_PROCESSING_DB.RAW.AUTO_PROCESS_NEW_RECEIPTS RESUME;
+
+-- Stop automated processing (suspend the task):
+ALTER TASK RECEIPTS_PROCESSING_DB.RAW.AUTO_PROCESS_NEW_RECEIPTS SUSPEND;
+
+-- Check task status:
+SHOW TASKS LIKE 'AUTO_PROCESS_NEW_RECEIPTS' IN SCHEMA RECEIPTS_PROCESSING_DB.RAW;
+
+-- View task execution history:
+SELECT *
+FROM TABLE(INFORMATION_SCHEMA.TASK_HISTORY(
+  SCHEDULED_TIME_RANGE_START => DATEADD('day', -7, CURRENT_TIMESTAMP()),
+  TASK_NAME => 'AUTO_PROCESS_NEW_RECEIPTS'
+))
+ORDER BY SCHEDULED_TIME DESC;
+
+-- Manually execute the notebook:
+EXECUTE NOTEBOOK RECEIPTS_PROCESSING_DB.RAW.receipts_extractor_ai_extract();
+
+-- Check if stream has data (new files):
+SELECT SYSTEM$STREAM_HAS_DATA('RECEIPTS_PROCESSING_DB.RAW.RECEIPTS_STREAM');
 */
 

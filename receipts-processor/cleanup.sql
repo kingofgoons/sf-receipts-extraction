@@ -29,13 +29,23 @@ DROP TABLE IF EXISTS RECEIPTS_PROCESSING_DB.RAW.extracted_receipt_data_via_ai_ex
 DROP TABLE IF EXISTS RECEIPTS_PROCESSING_DB.RAW.parsed_receipts;
 
 -- ============================================================================
--- 3. Drop Stream (as SYSADMIN)
+-- 3. Drop Task (as SYSADMIN)
+-- ============================================================================
+
+-- Suspend task first (if it's running)
+ALTER TASK IF EXISTS RECEIPTS_PROCESSING_DB.RAW.AUTO_PROCESS_NEW_RECEIPTS SUSPEND;
+
+-- Drop the task
+DROP TASK IF EXISTS RECEIPTS_PROCESSING_DB.RAW.AUTO_PROCESS_NEW_RECEIPTS;
+
+-- ============================================================================
+-- 4. Drop Stream (as SYSADMIN)
 -- ============================================================================
 
 DROP STREAM IF EXISTS RECEIPTS_PROCESSING_DB.RAW.RECEIPTS_STREAM;
 
 -- ============================================================================
--- 4. Drop Stage (as SYSADMIN)
+-- 5. Drop Stage (as SYSADMIN)
 -- ============================================================================
 
 -- Remove all files from stage first (optional - uncomment if needed)
@@ -45,25 +55,25 @@ DROP STREAM IF EXISTS RECEIPTS_PROCESSING_DB.RAW.RECEIPTS_STREAM;
 DROP STAGE IF EXISTS RECEIPTS_PROCESSING_DB.RAW.RECEIPTS;
 
 -- ============================================================================
--- 5. Drop Schema (as SYSADMIN)
+-- 6. Drop Schema (as SYSADMIN)
 -- ============================================================================
 
 DROP SCHEMA IF EXISTS RECEIPTS_PROCESSING_DB.RAW CASCADE;
 
 -- ============================================================================
--- 6. Drop Database (as SYSADMIN)
+-- 7. Drop Database (as SYSADMIN)
 -- ============================================================================
 
 DROP DATABASE IF EXISTS RECEIPTS_PROCESSING_DB CASCADE;
 
 -- ============================================================================
--- 7. Drop Warehouse (as SYSADMIN)
+-- 8. Drop Warehouse (as SYSADMIN)
 -- ============================================================================
 
 DROP WAREHOUSE IF EXISTS RECEIPTS_PARSE_COMPLETE_WH;
 
 -- ============================================================================
--- 8. Revoke Grants (as ACCOUNTADMIN) - Optional
+-- 9. Revoke Grants (as ACCOUNTADMIN) - Optional
 -- ============================================================================
 
 USE ROLE ACCOUNTADMIN;
@@ -105,6 +115,7 @@ OBJECTS REMOVED:
 - Schema: RECEIPTS_PROCESSING_DB.RAW
 - Stage: RECEIPTS_PROCESSING_DB.RAW.RECEIPTS
 - Stream: RECEIPTS_PROCESSING_DB.RAW.RECEIPTS_STREAM
+- Task: RECEIPTS_PROCESSING_DB.RAW.AUTO_PROCESS_NEW_RECEIPTS
 - Tables:
   * parsed_receipts
   * extracted_receipt_data
