@@ -225,6 +225,163 @@ python receipt_generator.py --list-vendors
 python receipt_generator.py -v 5 -n 50
 ```
 
+### Automated Continuous Receipt Generation
+
+Generate and upload 250 receipts every hour using cron:
+
+#### 1. Create Automation Script
+
+Create `scripts/generate_and_upload.sh`:
+
+```bash
+#!/bin/bash
+# Automated receipt generation and upload script
+# Generates 250 receipts per hour and uploads to Snowflake
+
+# Get the project root directory
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+LOG_DIR="$PROJECT_ROOT/logs"
+mkdir -p "$LOG_DIR"
+
+# Log file with timestamp
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+LOG_FILE="$LOG_DIR/receipt_automation_${TIMESTAMP}.log"
+
+# Function to log messages
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+log "========================================="
+log "Starting receipt generation and upload"
+log "========================================="
+
+# Step 1: Generate 250 receipts
+log "Step 1: Generating 250 receipts..."
+cd "$PROJECT_ROOT/receipts.synthesis"
+python receipt_generator.py -n 250 -o "$PROJECT_ROOT/receipts" >> "$LOG_FILE" 2>&1
+
+if [ $? -eq 0 ]; then
+    log "✓ Successfully generated 250 receipts"
+else
+    log "✗ Error generating receipts"
+    exit 1
+fi
+
+# Step 2: Upload to Snowflake
+log "Step 2: Uploading receipts to Snowflake..."
+cd "$PROJECT_ROOT/receipts-uploader"
+source venv/bin/activate
+python upload_receipts.py >> "$LOG_FILE" 2>&1
+
+if [ $? -eq 0 ]; then
+    log "✓ Successfully uploaded receipts to Snowflake"
+else
+    log "✗ Error uploading receipts"
+    exit 1
+fi
+
+log "========================================="
+log "Automation cycle complete"
+log "========================================="
+
+# Clean up old log files (keep last 30 days)
+find "$LOG_DIR" -name "receipt_automation_*.log" -mtime +30 -delete
+
+exit 0
+```
+
+#### 2. Make Script Executable
+
+```bash
+chmod +x scripts/generate_and_upload.sh
+```
+
+#### 3. Configure Cron Job
+
+Edit your crontab:
+
+```bash
+crontab -e
+```
+
+Add this line to run every hour:
+
+```cron
+# Generate and upload 250 receipts every hour
+0 * * * * /path/to/Receipts.extraction/scripts/generate_and_upload.sh
+
+# Example: Run at 5 minutes past every hour
+5 * * * * /path/to/Receipts.extraction/scripts/generate_and_upload.sh
+
+# Example: Run every 2 hours
+0 */2 * * * /path/to/Receipts.extraction/scripts/generate_and_upload.sh
+```
+
+Replace `/path/to/Receipts.extraction` with the actual absolute path to your project.
+
+#### 4. Verify Cron Setup
+
+```bash
+# List current cron jobs
+crontab -l
+
+# View logs
+tail -f logs/receipt_automation_*.log
+```
+
+#### 5. Cron Schedule Examples
+
+```cron
+# Every hour
+0 * * * * /path/to/scripts/generate_and_upload.sh
+
+# Every 30 minutes
+*/30 * * * * /path/to/scripts/generate_and_upload.sh
+
+# Every 6 hours
+0 */6 * * * /path/to/scripts/generate_and_upload.sh
+
+# Monday-Friday 9 AM - 5 PM hourly
+0 9-17 * * 1-5 /path/to/scripts/generate_and_upload.sh
+
+# Weekdays every 2 hours during business hours
+0 9-17/2 * * 1-5 /path/to/scripts/generate_and_upload.sh
+```
+
+#### 6. Monitor and Manage
+
+```bash
+# View recent logs
+ls -lh logs/
+
+# Check last automation run
+tail -20 logs/receipt_automation_$(ls -t logs/ | head -1)
+
+# Disable cron job (comment out)
+crontab -e
+# Add # in front of the line
+
+# Remove cron job entirely
+crontab -r  # WARNING: Removes ALL cron jobs for current user
+```
+
+#### Prerequisites for Automation
+
+1. ✅ Python virtual environment set up in `receipts-uploader/venv/`
+2. ✅ Service account configured with credentials in `config.json`
+3. ✅ All dependencies installed in both `receipts.synthesis` and `receipts-uploader`
+4. ✅ Snowflake stage created (`RECEIPTS_PROCESSING_DB.RAW.RECEIPTS`)
+5. ✅ Write permissions to project directories
+
+#### Production Considerations
+
+- **Error Handling**: Logs capture all errors with timestamps
+- **Log Rotation**: Old logs automatically deleted after 30 days
+- **Idempotent**: Safe to re-run; uploads only new files
+- **Resource Usage**: Adjust generation count based on processing capacity
+- **Monitoring**: Set up alerts for failed automation runs
+
 ### Python API
 
 ```python
