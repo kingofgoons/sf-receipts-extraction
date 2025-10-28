@@ -120,7 +120,7 @@ CREATE TASK IF NOT EXISTS AUTO_PROCESS_NEW_RECEIPTS
   COMMENT = 'Automatically process new receipt files using AI_EXTRACT notebook'
   WHEN SYSTEM$STREAM_HAS_DATA('RECEIPTS_STREAM')
 AS
-  EXECUTE NOTEBOOK RECEIPTS_PROCESSING_DB.RAW.receipts_extractor_ai_extract();
+  EXECUTE NOTEBOOK RECEIPTS_PROCESSING_DB.PUBLIC.receipts_extractor_ai_extract();
 
 -- Grant permissions on the task (as ACCOUNTADMIN)
 USE ROLE ACCOUNTADMIN;
