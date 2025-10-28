@@ -1,0 +1,5 @@
+reportlab==4.0.7
+mimesis==11.1.0
+pillow==10.1.0
+
+
