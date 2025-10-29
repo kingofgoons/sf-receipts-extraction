@@ -3,5 +3,4 @@ channels:
   - snowflake
 dependencies:
   - pydantic=*
-  - snowflake-snowpark-python=*
   - typing=*
