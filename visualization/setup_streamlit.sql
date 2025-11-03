@@ -9,7 +9,23 @@ USE DATABASE RECEIPTS_PROCESSING_DB;
 USE SCHEMA PUBLIC;
 
 -- ============================================================================
--- 1. Create Streamlit App Stage (if using file-based approach)
+-- 1. Create Dedicated Warehouse for Streamlit App
+-- ============================================================================
+-- Use separate warehouse to avoid inflating extraction method costs
+
+CREATE WAREHOUSE IF NOT EXISTS RECEIPTS_VISUALIZATION_WH
+  WITH 
+    WAREHOUSE_SIZE = 'XSMALL'
+    AUTO_SUSPEND = 300  -- 5 minutes (longer for interactive app)
+    AUTO_RESUME = TRUE
+    INITIALLY_SUSPENDED = TRUE
+  COMMENT = 'Warehouse for Streamlit cost comparison dashboard';
+
+-- Grant usage to SYSADMIN
+GRANT USAGE ON WAREHOUSE RECEIPTS_VISUALIZATION_WH TO ROLE SYSADMIN;
+
+-- ============================================================================
+-- 2. Create Streamlit App Stage (if using file-based approach)
 -- ============================================================================
 
 CREATE STAGE IF NOT EXISTS STREAMLIT_APPS
@@ -19,19 +35,19 @@ CREATE STAGE IF NOT EXISTS STREAMLIT_APPS
 
 -- Upload the Streamlit app file
 -- PUT file://visualization/extraction_cost_comparison.py @RECEIPTS_PROCESSING_DB.PUBLIC.STREAMLIT_APPS AUTO_COMPRESS=FALSE;
-
+-- 
 -- ============================================================================
--- 2. Create Streamlit App
+-- 3. Create Streamlit App
 -- ============================================================================
 
 CREATE OR REPLACE STREAMLIT extraction_cost_dashboard
   ROOT_LOCATION = '@RECEIPTS_PROCESSING_DB.PUBLIC.STREAMLIT_APPS'
   MAIN_FILE = 'extraction_cost_comparison.py'
-  QUERY_WAREHOUSE = 'RECEIPTS_PARSE_COMPLETE_WH'
+  QUERY_WAREHOUSE = 'RECEIPTS_VISUALIZATION_WH'
   COMMENT = 'Dashboard to compare AI_COMPLETE vs AI_EXTRACT extraction costs';
 
 -- ============================================================================
--- 3. Grant Permissions
+-- 4. Grant Permissions
 -- ============================================================================
 
 USE ROLE ACCOUNTADMIN;
@@ -49,7 +65,7 @@ GRANT IMPORTED PRIVILEGES ON DATABASE SNOWFLAKE TO ROLE SYSADMIN;
 GRANT IMPORTED PRIVILEGES ON DATABASE SNOWFLAKE TO ROLE ETL_SERVICE_ROLE;
 
 -- ============================================================================
--- 4. Verify Setup
+-- 5. Verify Setup
 -- ============================================================================
 
 USE ROLE SYSADMIN;
@@ -58,7 +74,7 @@ USE ROLE SYSADMIN;
 SHOW STREAMLITS LIKE 'extraction_cost_dashboard' IN SCHEMA RECEIPTS_PROCESSING_DB.PUBLIC;
 
 -- ============================================================================
--- 5. Access the Dashboard
+-- 6. Access the Dashboard
 -- ============================================================================
 
 /*
