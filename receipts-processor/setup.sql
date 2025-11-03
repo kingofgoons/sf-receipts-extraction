@@ -161,8 +161,8 @@ GRANT OWNERSHIP ON TASK RECEIPTS_PROCESSING_DB.RAW.AUTO_PROCESS_NEW_RECEIPTS TO 
 
 -- Step 1: Upload notebook files to the NOTEBOOKS stage
 -- Organize notebooks in subdirectories for better separation
--- Run these commands from your local machine using SnowSQL:
 /*
+-- ========== Option 1: Using SnowSQL ==========
 -- Upload AI_COMPLETE notebook and environment.yml to parse_and_complete/ directory
 PUT file://receipts-processor/parse.and.complete/receipts-extractor.ipynb 
   @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/parse_and_complete/ 
@@ -176,11 +176,36 @@ PUT file://receipts-processor/ai.extract/receipts-extractor_ai_extract.ipynb
   @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/ai_extract/ 
   AUTO_COMPRESS=FALSE;
 
--- Or from Snowsight, manually upload files to their respective subdirectories in the NOTEBOOKS stage
+-- ========== Option 2: Using Snowflake CLI ==========
+-- From your terminal in the project root directory:
 
--- Verify files are uploaded
+-- Upload AI_COMPLETE notebook and environment (requires Snowflake CLI v3.0+)
+snow stage copy "receipts-processor/parse.and.complete/receipts-extractor.ipynb" \
+  @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/parse_and_complete/ \
+  --connection <YOUR_CONNECTION_NAME>
+
+snow stage copy "receipts-processor/parse.and.complete/environment.yml" \
+  @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/parse_and_complete/ \
+  --connection <YOUR_CONNECTION_NAME>
+
+-- Upload AI_EXTRACT notebook
+snow stage copy "receipts-processor/ai.extract/receipts-extractor_ai_extract.ipynb" \
+  @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/ai_extract/ \
+  --connection <YOUR_CONNECTION_NAME>
+
+-- ========== Option 3: Using Snowsight UI ==========
+-- Navigate to Data » Databases » RECEIPTS_PROCESSING_DB » PUBLIC » Stages » NOTEBOOKS
+-- Click "+ Files" and upload to respective subdirectories:
+--   - parse_and_complete/: receipts-extractor.ipynb, environment.yml
+--   - ai_extract/: receipts-extractor_ai_extract.ipynb
+
+-- ========== Verify Uploads ==========
 LIST @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/parse_and_complete/;
 LIST @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/ai_extract/;
+
+-- Or with Snowflake CLI:
+-- snow stage list @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/parse_and_complete/ --connection <YOUR_CONNECTION_NAME>
+-- snow stage list @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/ai_extract/ --connection <YOUR_CONNECTION_NAME>
 */
 
 -- Step 2: Create notebooks from uploaded files in their subdirectories
