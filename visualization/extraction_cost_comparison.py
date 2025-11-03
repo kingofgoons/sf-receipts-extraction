@@ -181,8 +181,9 @@ with tab3:
         MODEL_NAME,
         DATE_TRUNC('day', START_TIME) AS day,
         COUNT(*) AS num_calls,
-        SUM(CREDITS_USED) AS total_credits,
-        AVG(CREDITS_USED) AS avg_credits_per_call
+        SUM(TOKENS) AS total_tokens,
+        SUM(TOKEN_CREDITS) AS total_credits,
+        AVG(TOKEN_CREDITS) AS avg_credits_per_call
     FROM SNOWFLAKE.ACCOUNT_USAGE.CORTEX_FUNCTIONS_USAGE_HISTORY
     WHERE FUNCTION_NAME IN ('AI_COMPLETE', 'AI_EXTRACT')
       AND START_TIME >= DATEADD('day', -30, CURRENT_TIMESTAMP())
@@ -194,6 +195,7 @@ with tab3:
         # Summary by function
         function_summary = cortex_costs.groupby('FUNCTION_NAME').agg({
             'NUM_CALLS': 'sum',
+            'TOTAL_TOKENS': 'sum',
             'TOTAL_CREDITS': 'sum',
             'AVG_CREDITS_PER_CALL': 'mean'
         }).reset_index()
@@ -204,6 +206,7 @@ with tab3:
             with col1 if row['FUNCTION_NAME'] == 'AI_COMPLETE' else col2:
                 st.markdown(f"**{row['FUNCTION_NAME']}**")
                 st.metric("Calls", f"{row['NUM_CALLS']:.0f}")
+                st.metric("Total Tokens", f"{row.get('TOTAL_TOKENS', 0):,.0f}")
                 st.metric("Credits", f"{row['TOTAL_CREDITS']:.2f}")
                 st.metric("Avg/Call", f"{row['AVG_CREDITS_PER_CALL']:.4f}")
         
@@ -213,7 +216,7 @@ with tab3:
             x=alt.X('DAY:T', title='Date'),
             y=alt.Y('TOTAL_CREDITS:Q', title='Credits Used'),
             color=alt.Color('FUNCTION_NAME:N', title='Function'),
-            tooltip=['DAY:T', 'FUNCTION_NAME:N', 'MODEL_NAME:N', 'NUM_CALLS:Q', 'TOTAL_CREDITS:Q']
+            tooltip=['DAY:T', 'FUNCTION_NAME:N', 'MODEL_NAME:N', 'NUM_CALLS:Q', 'TOTAL_TOKENS:Q', 'TOTAL_CREDITS:Q']
         ).properties(height=400)
         
         st.altair_chart(chart, use_container_width=True)

@@ -35,7 +35,12 @@ CREATE STAGE IF NOT EXISTS STREAMLIT_APPS
 
 -- Upload the Streamlit app file
 -- PUT file://visualization/extraction_cost_comparison.py @RECEIPTS_PROCESSING_DB.PUBLIC.STREAMLIT_APPS AUTO_COMPRESS=FALSE;
--- 
+-- or
+/**
+ snow stage copy "visualization/extraction_cost_comparison.py" \
+  @RECEIPTS_PROCESSING_DB.PUBLIC.STREAMLIT_APPS \
+  --connection TOP_LEVEL_BLANDSMAN_ORG_AWS_US_East
+**/
 -- ============================================================================
 -- 3. Create Streamlit App
 -- ============================================================================
