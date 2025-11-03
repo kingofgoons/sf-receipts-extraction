@@ -93,8 +93,8 @@ with tab1:
 with tab2:
     st.header("Warehouse Credit Consumption")
     
-    # Query warehouse costs
-    warehouse_costs = session.sql("""
+    # Query warehouse costs (using days_back from sidebar)
+    warehouse_costs = session.sql(f"""
     SELECT 
         WAREHOUSE_NAME,
         DATE_TRUNC('day', START_TIME) AS day,
@@ -104,7 +104,7 @@ with tab2:
         COUNT(*) AS num_queries
     FROM SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY
     WHERE WAREHOUSE_NAME IN ('RECEIPTS_PARSE_COMPLETE_WH', 'RECEIPTS_AI_EXTRACT_WH')
-      AND START_TIME >= DATEADD('day', -30, CURRENT_TIMESTAMP())
+      AND START_TIME >= DATEADD('day', -{days_back}, CURRENT_TIMESTAMP())
     GROUP BY WAREHOUSE_NAME, DATE_TRUNC('day', START_TIME)
     ORDER BY day DESC, WAREHOUSE_NAME
     """).to_pandas()
@@ -146,14 +146,14 @@ with tab3:
     
     # Cortex Document Processing costs (AI_PARSE_DOCUMENT)
     st.subheader("Cortex Document Processing (AI_PARSE_DOCUMENT)")
-    doc_ai_costs = session.sql("""
+    doc_ai_costs = session.sql(f"""
     SELECT 
         DATE_TRUNC('day', START_TIME) AS day,
         COUNT(*) AS num_calls,
         SUM(CREDITS_USED) AS total_credits,
         AVG(CREDITS_USED) AS avg_credits_per_call
     FROM SNOWFLAKE.ACCOUNT_USAGE.CORTEX_DOCUMENT_PROCESSING_USAGE_HISTORY
-    WHERE START_TIME >= DATEADD('day', -30, CURRENT_TIMESTAMP())
+    WHERE START_TIME >= DATEADD('day', -{days_back}, CURRENT_TIMESTAMP())
     GROUP BY DATE_TRUNC('day', START_TIME)
     ORDER BY day DESC
     """).to_pandas()
@@ -175,7 +175,7 @@ with tab3:
     
     # Cortex functions costs (AI_COMPLETE, AI_EXTRACT)
     st.subheader("Cortex Functions Costs (AI_COMPLETE & AI_EXTRACT)")
-    cortex_costs = session.sql("""
+    cortex_costs = session.sql(f"""
     SELECT 
         FUNCTION_NAME,
         MODEL_NAME,
@@ -186,7 +186,7 @@ with tab3:
         AVG(TOKEN_CREDITS) AS avg_credits_per_call
     FROM SNOWFLAKE.ACCOUNT_USAGE.CORTEX_FUNCTIONS_USAGE_HISTORY
     WHERE FUNCTION_NAME IN ('AI_COMPLETE', 'AI_EXTRACT')
-      AND START_TIME >= DATEADD('day', -30, CURRENT_TIMESTAMP())
+      AND START_TIME >= DATEADD('day', -{days_back}, CURRENT_TIMESTAMP())
     GROUP BY FUNCTION_NAME, MODEL_NAME, DATE_TRUNC('day', START_TIME)
     ORDER BY day DESC, FUNCTION_NAME, MODEL_NAME
     """).to_pandas()
