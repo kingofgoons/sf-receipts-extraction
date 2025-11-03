@@ -82,10 +82,13 @@ USE ROLE ACCOUNTADMIN;
 
 -- Grant warehouse usage for receipt processing (both warehouses)
 GRANT USAGE ON WAREHOUSE RECEIPTS_PARSE_COMPLETE_WH TO ROLE ETL_SERVICE_ROLE;
+GRANT USAGE ON WAREHOUSE RECEIPTS_PARSE_COMPLETE_WH TO ROLE SYSADMIN;
 GRANT USAGE ON WAREHOUSE RECEIPTS_AI_EXTRACT_WH TO ROLE ETL_SERVICE_ROLE;
+GRANT USAGE ON WAREHOUSE RECEIPTS_AI_EXTRACT_WH TO ROLE SYSADMIN;
 
 -- Grant database usage
 GRANT USAGE ON DATABASE RECEIPTS_PROCESSING_DB TO ROLE ETL_SERVICE_ROLE;
+GRANT USAGE ON DATABASE RECEIPTS_PROCESSING_DB TO ROLE SYSADMIN;
 
 -- Grant schema usage and create permissions
 GRANT USAGE ON SCHEMA RECEIPTS_PROCESSING_DB.RAW TO ROLE ETL_SERVICE_ROLE;
@@ -157,33 +160,44 @@ GRANT OWNERSHIP ON TASK RECEIPTS_PROCESSING_DB.RAW.AUTO_PROCESS_NEW_RECEIPTS TO 
 -- ============================================================================
 
 -- Step 1: Upload notebook files to the NOTEBOOKS stage
--- Run these commands from your local machine using SnowSQL or Snowsight:
+-- Organize notebooks in subdirectories for better separation
+-- Run these commands from your local machine using SnowSQL:
 /*
--- Upload notebooks to stage (run from terminal with SnowSQL)
-PUT file://receipts-processor/parse.and.complete/receipts-extractor.ipynb @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS AUTO_COMPRESS=FALSE;
-PUT file://receipts-processor/ai.extract/receipts-extractor_ai_extract.ipynb @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS AUTO_COMPRESS=FALSE;
+-- Upload AI_COMPLETE notebook and environment.yml to parse_and_complete/ directory
+PUT file://receipts-processor/parse.and.complete/receipts-extractor.ipynb 
+  @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/parse_and_complete/ 
+  AUTO_COMPRESS=FALSE;
+PUT file://receipts-processor/parse.and.complete/environment.yml 
+  @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/parse_and_complete/ 
+  AUTO_COMPRESS=FALSE;
 
--- Or from Snowsight, manually upload the .ipynb files to the NOTEBOOKS stage
+-- Upload AI_EXTRACT notebook to ai_extract/ directory
+PUT file://receipts-processor/ai.extract/receipts-extractor_ai_extract.ipynb 
+  @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/ai_extract/ 
+  AUTO_COMPRESS=FALSE;
+
+-- Or from Snowsight, manually upload files to their respective subdirectories in the NOTEBOOKS stage
 
 -- Verify files are uploaded
-LIST @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS;
+LIST @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/parse_and_complete/;
+LIST @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/ai_extract/;
 */
 
--- Step 2: Create notebooks from uploaded files
+-- Step 2: Create notebooks from uploaded files in their subdirectories
 USE ROLE SYSADMIN;
 USE DATABASE RECEIPTS_PROCESSING_DB;
 USE SCHEMA PUBLIC;
 
 -- Create AI_COMPLETE notebook (uses AI_PARSE_DOCUMENT + AI_COMPLETE)
 CREATE NOTEBOOK IF NOT EXISTS receipts_extractor
-  FROM '@RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS'
+  FROM '@RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/parse_and_complete'
   MAIN_FILE = 'receipts-extractor.ipynb'
   QUERY_WAREHOUSE = 'RECEIPTS_PARSE_COMPLETE_WH'
-  COMMENT = 'Receipt extraction using AI_PARSE_DOCUMENT + AI_COMPLETE approach';
+  COMMENT = 'Receipt extraction using AI_PARSE_DOCUMENT + AI_COMPLETE approach (includes environment.yml)';
 
 -- Create AI_EXTRACT notebook (direct PDF processing)
 CREATE NOTEBOOK IF NOT EXISTS receipts_extractor_ai_extract
-  FROM '@RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS'
+  FROM '@RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS/ai_extract'
   MAIN_FILE = 'receipts-extractor_ai_extract.ipynb'
   QUERY_WAREHOUSE = 'RECEIPTS_AI_EXTRACT_WH'
   COMMENT = 'Receipt extraction using AI_EXTRACT direct PDF approach';
