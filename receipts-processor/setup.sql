@@ -13,14 +13,23 @@
 
 USE ROLE SYSADMIN;
 
--- Create dedicated warehouse for receipt parsing and AI completion
+-- Create dedicated warehouse for receipt parsing and AI_COMPLETE (parse.and.complete approach)
 CREATE WAREHOUSE IF NOT EXISTS RECEIPTS_PARSE_COMPLETE_WH
   WITH 
     WAREHOUSE_SIZE = 'XSMALL'
     AUTO_SUSPEND = 60
     AUTO_RESUME = TRUE
     INITIALLY_SUSPENDED = TRUE
-  COMMENT = 'Warehouse for receipts-extractor notebook AI parsing and completion';
+  COMMENT = 'Warehouse for AI_PARSE_DOCUMENT + AI_COMPLETE extraction (receipts-extractor.ipynb)';
+
+-- Create dedicated warehouse for AI_EXTRACT (direct PDF processing)
+CREATE WAREHOUSE IF NOT EXISTS RECEIPTS_AI_EXTRACT_WH
+  WITH 
+    WAREHOUSE_SIZE = 'XSMALL'
+    AUTO_SUSPEND = 60
+    AUTO_RESUME = TRUE
+    INITIALLY_SUSPENDED = TRUE
+  COMMENT = 'Warehouse for AI_EXTRACT direct PDF processing (receipts-extractor_ai_extract.ipynb)';
 
 -- ============================================================================
 -- 2. Create Database and Schema (as SYSADMIN)
@@ -59,8 +68,9 @@ ALTER STAGE RECEIPTS REFRESH;
 
 USE ROLE ACCOUNTADMIN;
 
--- Grant warehouse usage for receipt processing
+-- Grant warehouse usage for receipt processing (both warehouses)
 GRANT USAGE ON WAREHOUSE RECEIPTS_PARSE_COMPLETE_WH TO ROLE ETL_SERVICE_ROLE;
+GRANT USAGE ON WAREHOUSE RECEIPTS_AI_EXTRACT_WH TO ROLE ETL_SERVICE_ROLE;
 
 -- Grant database usage
 GRANT USAGE ON DATABASE RECEIPTS_PROCESSING_DB TO ROLE ETL_SERVICE_ROLE;
@@ -113,9 +123,9 @@ USE DATABASE RECEIPTS_PROCESSING_DB;
 USE SCHEMA RAW;
 
 -- Create task to process new receipts automatically
--- Note: The notebook 'receipts-extractor_ai_extract' must exist in RECEIPTS_PROCESSING_DB.RAW
+-- Note: The notebook 'receipts-extractor_ai_extract' must exist in RECEIPTS_PROCESSING_DB.PUBLIC
 CREATE TASK IF NOT EXISTS AUTO_PROCESS_NEW_RECEIPTS
-  WAREHOUSE = RECEIPTS_PARSE_COMPLETE_WH
+  WAREHOUSE = RECEIPTS_AI_EXTRACT_WH
   SCHEDULE = '1 MINUTE'
   COMMENT = 'Automatically process new receipt files using AI_EXTRACT notebook'
   WHEN SYSTEM$STREAM_HAS_DATA('RECEIPTS_STREAM')
@@ -137,7 +147,7 @@ GRANT OWNERSHIP ON TASK RECEIPTS_PROCESSING_DB.RAW.AUTO_PROCESS_NEW_RECEIPTS TO 
 USE ROLE SYSADMIN;
 
 -- Show created objects
-SHOW WAREHOUSES LIKE 'RECEIPTS_PARSE_COMPLETE_WH';
+SHOW WAREHOUSES LIKE 'RECEIPTS_%';
 SHOW DATABASES LIKE 'RECEIPTS_PROCESSING_DB';
 SHOW SCHEMAS IN DATABASE RECEIPTS_PROCESSING_DB;
 SHOW STAGES IN SCHEMA RECEIPTS_PROCESSING_DB.RAW;
@@ -154,7 +164,7 @@ SHOW GRANTS TO ROLE ETL_SERVICE_ROLE;
 
 -- Display summary
 SELECT 'Setup complete!' AS status,
-       'RECEIPTS_PARSE_COMPLETE_WH' AS warehouse_name,
+       'RECEIPTS_PARSE_COMPLETE_WH (AI_COMPLETE), RECEIPTS_AI_EXTRACT_WH (AI_EXTRACT)' AS warehouses,
        'RECEIPTS_PROCESSING_DB' AS database_name,
        'RAW' AS schema_name,
        'RECEIPTS' AS stage_name,
