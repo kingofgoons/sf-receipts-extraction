@@ -20,6 +20,48 @@ st.set_page_config(
 st.title("💰 Receipt Extraction Cost Comparison")
 st.markdown("### AI_COMPLETE vs AI_EXTRACT for V1 Receipts")
 
+# ============================================================================
+# Sidebar: Filters and Settings (define before tabs to use in queries)
+# ============================================================================
+with st.sidebar:
+    st.header("⚙️ Settings")
+    
+    # Date range filter
+    days_back = st.slider("Days of history", 1, 90, 30)
+    
+    st.markdown("---")
+    
+    # Data refresh
+    if st.button("🔄 Refresh Data"):
+        st.experimental_rerun()
+    
+    st.markdown("---")
+    
+    # Info
+    st.markdown("""
+    ### About This Dashboard
+    
+    This dashboard compares the costs of two receipt extraction methods:
+    
+    **AI_COMPLETE**: 
+    - Uses AI_PARSE_DOCUMENT + AI_COMPLETE
+    - More complex, two-step process
+    
+    **AI_EXTRACT**:
+    - Direct PDF processing
+    - Single-step extraction
+    
+    **Data Sources**:
+    - `SNOWFLAKE.ACCOUNT_USAGE.*`
+    - Warehouse metering
+    - Cortex function usage
+    - Document AI usage
+    - Notebook execution history
+    """)
+    
+    st.markdown("---")
+    st.caption("Built with Streamlit in Snowflake")
+
 # Tabs for different views
 tab1, tab2, tab3, tab4 = st.tabs(["📊 Overview", "🏛️ Warehouse Costs", "🤖 Cortex Costs", "📈 Trends"])
 
@@ -305,48 +347,6 @@ with tab4:
         - ✅ Faster processing
         - ✅ Lower latency
         """)
-
-# ============================================================================
-# Sidebar: Filters and Settings
-# ============================================================================
-with st.sidebar:
-    st.header("⚙️ Settings")
-    
-    # Date range filter
-    days_back = st.slider("Days of history", 1, 90, 30)
-    
-    st.markdown("---")
-    
-    # Data refresh
-    if st.button("🔄 Refresh Data"):
-        st.experimental_rerun()
-    
-    st.markdown("---")
-    
-    # Info
-    st.markdown("""
-    ### About This Dashboard
-    
-    This dashboard compares the costs of two receipt extraction methods:
-    
-    **AI_COMPLETE**: 
-    - Uses AI_PARSE_DOCUMENT + AI_COMPLETE
-    - More complex, two-step process
-    
-    **AI_EXTRACT**:
-    - Direct PDF processing
-    - Single-step extraction
-    
-    **Data Sources**:
-    - `SNOWFLAKE.ACCOUNT_USAGE.*`
-    - Warehouse metering
-    - Cortex function usage
-    - Document AI usage
-    - Notebook execution history
-    """)
-    
-    st.markdown("---")
-    st.caption("Built with Streamlit in Snowflake")
 
 # Footer
 st.markdown("---")
