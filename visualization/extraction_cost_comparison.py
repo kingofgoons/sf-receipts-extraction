@@ -319,7 +319,7 @@ with st.sidebar:
     
     # Data refresh
     if st.button("🔄 Refresh Data"):
-        st.rerun()
+        st.experimental_rerun()
     
     st.markdown("---")
     
