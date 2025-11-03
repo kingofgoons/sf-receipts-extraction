@@ -258,9 +258,10 @@ with tab4:
     SELECT 
         NOTEBOOK_NAME,
         DATE_TRUNC('hour', START_TIME) AS hour,
-        SUM(CREDITS_USED) AS total_credits,
+        SUM(CREDITS) AS total_credits,
+        SUM(NOTEBOOK_EXECUTION_TIME_SECS) AS total_execution_secs,
         COUNT(*) AS num_executions,
-        AVG(CREDITS_USED) AS avg_credits_per_execution
+        AVG(CREDITS) AS avg_credits_per_execution
     FROM SNOWFLAKE.ACCOUNT_USAGE.NOTEBOOKS_CONTAINER_RUNTIME_HISTORY
     WHERE NOTEBOOK_NAME IN ('receipts_extractor', 'receipts_extractor_ai_extract')
       AND START_TIME >= DATEADD('day', -7, CURRENT_TIMESTAMP())
