@@ -50,10 +50,12 @@ CREATE SCHEMA IF NOT EXISTS RAW
 USE SCHEMA RAW;
 
 -- ============================================================================
--- 3. Create Stage for Receipt Files
+-- 3. Create Stages
 -- ============================================================================
 
--- Create internal stage for receipt PDFs
+-- Create internal stage for receipt PDFs (in RAW schema)
+USE SCHEMA RAW;
+
 CREATE STAGE IF NOT EXISTS RECEIPTS
   DIRECTORY = (ENABLE = TRUE)
   ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE')
@@ -61,6 +63,16 @@ CREATE STAGE IF NOT EXISTS RECEIPTS
 
 -- Refresh the stage metadata to initialize the directory table
 ALTER STAGE RECEIPTS REFRESH;
+
+-- Create stage for notebook files (in PUBLIC schema)
+USE SCHEMA PUBLIC;
+
+CREATE STAGE IF NOT EXISTS NOTEBOOKS
+  DIRECTORY = (ENABLE = TRUE)
+  ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE')
+  COMMENT = 'Stage for storing notebook .ipynb files for programmatic deployment';
+
+ALTER STAGE NOTEBOOKS REFRESH;
 
 -- ============================================================================
 -- 4. Grant Permissions to ETL_SERVICE_ROLE (as ACCOUNTADMIN)
@@ -141,7 +153,48 @@ GRANT OWNERSHIP ON TASK RECEIPTS_PROCESSING_DB.RAW.AUTO_PROCESS_NEW_RECEIPTS TO 
 -- ALTER TASK RECEIPTS_PROCESSING_DB.RAW.AUTO_PROCESS_NEW_RECEIPTS RESUME;
 
 -- ============================================================================
--- 7. Verify Setup
+-- 7. Upload and Create Notebooks
+-- ============================================================================
+
+-- Step 1: Upload notebook files to the NOTEBOOKS stage
+-- Run these commands from your local machine using SnowSQL or Snowsight:
+/*
+-- Upload notebooks to stage (run from terminal with SnowSQL)
+PUT file://receipts-processor/parse.and.complete/receipts-extractor.ipynb @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS AUTO_COMPRESS=FALSE;
+PUT file://receipts-processor/ai.extract/receipts-extractor_ai_extract.ipynb @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS AUTO_COMPRESS=FALSE;
+
+-- Or from Snowsight, manually upload the .ipynb files to the NOTEBOOKS stage
+
+-- Verify files are uploaded
+LIST @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS;
+*/
+
+-- Step 2: Create notebooks from uploaded files
+USE ROLE SYSADMIN;
+USE DATABASE RECEIPTS_PROCESSING_DB;
+USE SCHEMA PUBLIC;
+
+-- Create AI_COMPLETE notebook (uses AI_PARSE_DOCUMENT + AI_COMPLETE)
+CREATE NOTEBOOK IF NOT EXISTS receipts_extractor
+  FROM '@RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS'
+  MAIN_FILE = 'receipts-extractor.ipynb'
+  QUERY_WAREHOUSE = 'RECEIPTS_PARSE_COMPLETE_WH'
+  COMMENT = 'Receipt extraction using AI_PARSE_DOCUMENT + AI_COMPLETE approach';
+
+-- Create AI_EXTRACT notebook (direct PDF processing)
+CREATE NOTEBOOK IF NOT EXISTS receipts_extractor_ai_extract
+  FROM '@RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS'
+  MAIN_FILE = 'receipts-extractor_ai_extract.ipynb'
+  QUERY_WAREHOUSE = 'RECEIPTS_AI_EXTRACT_WH'
+  COMMENT = 'Receipt extraction using AI_EXTRACT direct PDF approach';
+
+-- Grant permissions on notebooks to ETL_SERVICE_ROLE
+USE ROLE ACCOUNTADMIN;
+GRANT OWNERSHIP ON NOTEBOOK RECEIPTS_PROCESSING_DB.PUBLIC.receipts_extractor TO ROLE ETL_SERVICE_ROLE;
+GRANT OWNERSHIP ON NOTEBOOK RECEIPTS_PROCESSING_DB.PUBLIC.receipts_extractor_ai_extract TO ROLE ETL_SERVICE_ROLE;
+
+-- ============================================================================
+-- 8. Verify Setup
 -- ============================================================================
 
 USE ROLE SYSADMIN;
@@ -151,6 +204,8 @@ SHOW WAREHOUSES LIKE 'RECEIPTS_%';
 SHOW DATABASES LIKE 'RECEIPTS_PROCESSING_DB';
 SHOW SCHEMAS IN DATABASE RECEIPTS_PROCESSING_DB;
 SHOW STAGES IN SCHEMA RECEIPTS_PROCESSING_DB.RAW;
+SHOW STAGES IN SCHEMA RECEIPTS_PROCESSING_DB.PUBLIC;
+SHOW NOTEBOOKS IN SCHEMA RECEIPTS_PROCESSING_DB.PUBLIC;
 SHOW STREAMS IN SCHEMA RECEIPTS_PROCESSING_DB.RAW;
 SHOW TASKS IN SCHEMA RECEIPTS_PROCESSING_DB.RAW;
 
@@ -164,13 +219,13 @@ SHOW GRANTS TO ROLE ETL_SERVICE_ROLE;
 
 -- Display summary
 SELECT 'Setup complete!' AS status,
-       'RECEIPTS_PARSE_COMPLETE_WH (AI_COMPLETE), RECEIPTS_AI_EXTRACT_WH (AI_EXTRACT)' AS warehouses,
+       'RECEIPTS_PARSE_COMPLETE_WH, RECEIPTS_AI_EXTRACT_WH' AS warehouses,
        'RECEIPTS_PROCESSING_DB' AS database_name,
-       'RAW' AS schema_name,
-       'RECEIPTS' AS stage_name,
+       'RAW, PUBLIC' AS schemas,
+       'RECEIPTS (RAW), NOTEBOOKS (PUBLIC)' AS stages,
+       'receipts_extractor, receipts_extractor_ai_extract' AS notebooks,
        'RECEIPTS_STREAM' AS stream_name,
        'AUTO_PROCESS_NEW_RECEIPTS' AS task_name,
-       'receipts_extractor_ai_extract' AS notebook_name,
        'ETL_SERVICE_ROLE' AS role_with_access;
 
 -- ============================================================================

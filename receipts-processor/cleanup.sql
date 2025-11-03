@@ -8,17 +8,29 @@
 -- ============================================================================
 
 -- ============================================================================
--- 1. Drop Views (as SYSADMIN)
+-- 1. Drop Notebooks (as SYSADMIN)
 -- ============================================================================
 
 USE ROLE SYSADMIN;
+USE DATABASE RECEIPTS_PROCESSING_DB;
+USE SCHEMA PUBLIC;
 
--- Drop analytics views
-DROP VIEW IF EXISTS RECEIPTS_PROCESSING_DB.RAW.receipt_analytics_vw;
-DROP VIEW IF EXISTS RECEIPTS_PROCESSING_DB.RAW.receipt_analytics_ai_extract_vw;
+-- Drop notebooks
+DROP NOTEBOOK IF EXISTS receipts_extractor;
+DROP NOTEBOOK IF EXISTS receipts_extractor_ai_extract;
 
 -- ============================================================================
--- 2. Drop Tables (as SYSADMIN)
+-- 2. Drop Views (as SYSADMIN)
+-- ============================================================================
+
+USE SCHEMA RAW;
+
+-- Drop analytics views
+DROP VIEW IF EXISTS receipt_analytics_vw;
+DROP VIEW IF EXISTS receipt_analytics_ai_extract_vw;
+
+-- ============================================================================
+-- 3. Drop Tables (as SYSADMIN)
 -- ============================================================================
 
 -- Drop extracted receipt data tables
@@ -29,7 +41,7 @@ DROP TABLE IF EXISTS RECEIPTS_PROCESSING_DB.RAW.extracted_receipt_data_via_ai_ex
 DROP TABLE IF EXISTS RECEIPTS_PROCESSING_DB.RAW.parsed_receipts;
 
 -- ============================================================================
--- 3. Drop Task (as SYSADMIN)
+-- 4. Drop Task (as SYSADMIN)
 -- ============================================================================
 
 -- Suspend task first (if it's running)
@@ -39,42 +51,46 @@ ALTER TASK IF EXISTS RECEIPTS_PROCESSING_DB.RAW.AUTO_PROCESS_NEW_RECEIPTS SUSPEN
 DROP TASK IF EXISTS RECEIPTS_PROCESSING_DB.RAW.AUTO_PROCESS_NEW_RECEIPTS;
 
 -- ============================================================================
--- 4. Drop Stream (as SYSADMIN)
+-- 5. Drop Stream (as SYSADMIN)
 -- ============================================================================
 
 DROP STREAM IF EXISTS RECEIPTS_PROCESSING_DB.RAW.RECEIPTS_STREAM;
 
 -- ============================================================================
--- 5. Drop Stage (as SYSADMIN)
+-- 6. Drop Stages (as SYSADMIN)
 -- ============================================================================
 
--- Remove all files from stage first (optional - uncomment if needed)
+-- Remove all files from stages first (optional - uncomment if needed)
 -- REMOVE @RECEIPTS_PROCESSING_DB.RAW.RECEIPTS;
+-- REMOVE @RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS;
 
--- Drop the stage
+-- Drop the receipt files stage
 DROP STAGE IF EXISTS RECEIPTS_PROCESSING_DB.RAW.RECEIPTS;
 
+-- Drop the notebooks stage
+DROP STAGE IF EXISTS RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS;
+
 -- ============================================================================
--- 6. Drop Schema (as SYSADMIN)
+-- 7. Drop Schema (as SYSADMIN)
 -- ============================================================================
 
 DROP SCHEMA IF EXISTS RECEIPTS_PROCESSING_DB.RAW CASCADE;
 
 -- ============================================================================
--- 7. Drop Database (as SYSADMIN)
+-- 8. Drop Database (as SYSADMIN)
 -- ============================================================================
 
 DROP DATABASE IF EXISTS RECEIPTS_PROCESSING_DB CASCADE;
 
 -- ============================================================================
--- 8. Drop Warehouses (as SYSADMIN)
+-- 9. Drop Warehouses (as SYSADMIN)
 -- ============================================================================
 
 DROP WAREHOUSE IF EXISTS RECEIPTS_PARSE_COMPLETE_WH;
 DROP WAREHOUSE IF EXISTS RECEIPTS_AI_EXTRACT_WH;
 
 -- ============================================================================
--- 9. Revoke Grants (as ACCOUNTADMIN) - Optional
+-- 10. Revoke Grants (as ACCOUNTADMIN) - Optional
 -- ============================================================================
 
 USE ROLE ACCOUNTADMIN;
@@ -116,8 +132,13 @@ OBJECTS REMOVED:
   * RECEIPTS_PARSE_COMPLETE_WH (for AI_COMPLETE processing)
   * RECEIPTS_AI_EXTRACT_WH (for AI_EXTRACT processing)
 - Database: RECEIPTS_PROCESSING_DB
-- Schema: RECEIPTS_PROCESSING_DB.RAW
-- Stage: RECEIPTS_PROCESSING_DB.RAW.RECEIPTS
+- Schemas: RAW, PUBLIC
+- Stages:
+  * RECEIPTS_PROCESSING_DB.RAW.RECEIPTS (receipt PDF files)
+  * RECEIPTS_PROCESSING_DB.PUBLIC.NOTEBOOKS (notebook files)
+- Notebooks:
+  * receipts_extractor (AI_COMPLETE approach)
+  * receipts_extractor_ai_extract (AI_EXTRACT approach)
 - Stream: RECEIPTS_PROCESSING_DB.RAW.RECEIPTS_STREAM
 - Task: RECEIPTS_PROCESSING_DB.RAW.AUTO_PROCESS_NEW_RECEIPTS
 - Tables:
