@@ -11,6 +11,81 @@ USE SCHEMA RAW;
 USE WAREHOUSE RECEIPTS_PARSE_COMPLETE_WH;
 
 -- ============================================================================
+-- Create Analytics Views
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- View 1: receipt_analytics_vw (from AI_COMPLETE extraction)
+-- ----------------------------------------------------------------------------
+-- Flatten extracted_receipt_data into queryable view with proper type conversion
+
+CREATE OR REPLACE VIEW receipt_analytics_vw AS
+SELECT
+    relative_path AS receipt_filename,
+    extracted_data:vendor.vendor_name::STRING AS vendor_name,
+    extracted_data:transaction.receipt_id::STRING AS receipt_id,
+    TRY_TO_DATE(extracted_data:transaction.date::STRING) AS transaction_date,
+    extracted_data:transaction.payment_method::STRING AS payment_method,
+    extracted_data:customer.company_name::STRING AS company_name,
+    extracted_data:customer.customer_name::STRING AS customer_name,
+    extracted_data:campaign.name::STRING AS campaign_name,
+    TRY_TO_DATE(extracted_data:campaign.period_startdate::STRING) AS period_startdate,
+    TRY_TO_DATE(extracted_data:campaign.period_enddate::STRING) AS period_enddate,
+    extracted_data:campaign.content_types::STRING AS content_types,
+    -- Strip $ and , from financial values and preserve decimals
+    TRY_TO_DECIMAL(REPLACE(REPLACE(extracted_data:financials.subtotal::STRING, '$', ''), ',', ''), 10, 2) AS subtotal,
+    TRY_TO_DECIMAL(REPLACE(REPLACE(extracted_data:financials.tax::STRING, '$', ''), ',', ''), 10, 2) AS tax,
+    TRY_TO_DECIMAL(REPLACE(REPLACE(extracted_data:financials.total::STRING, '$', ''), ',', ''), 10, 2) AS total_amount,
+    -- Strip $ from CPM and preserve decimals
+    TRY_TO_DECIMAL(REPLACE(extracted_data:metrics.cpm::STRING, '$', ''), 10, 2) AS cpm,
+    -- Strip % from CTR and Bounce Rate and preserve decimals
+    TRY_TO_DECIMAL(REPLACE(extracted_data:metrics.ctr::STRING, '%', ''), 10, 2) AS ctr_percent,
+    TRY_TO_DECIMAL(REPLACE(extracted_data:metrics.bounce_rate::STRING, '%', ''), 10, 2) AS bounce_rate_percent,
+    extracted_data:metrics.pricing_model::STRING AS pricing_model,
+    -- Strip $ and , from budget values and preserve decimals
+    TRY_TO_DECIMAL(REPLACE(REPLACE(extracted_data:budget.daily_budget::STRING, '$', ''), ',', ''), 10, 2) AS daily_budget,
+    TRY_TO_DECIMAL(REPLACE(REPLACE(extracted_data:budget.total_budget::STRING, '$', ''), ',', ''), 10, 2) AS campaign_budget,
+    extracted_data:targeting.frequency_cap::STRING AS frequency_cap,
+    extracted_data:targeting.age_range::STRING AS age_range,
+    CURRENT_TIMESTAMP() AS processed_at
+FROM extracted_receipt_data;
+
+-- ----------------------------------------------------------------------------
+-- View 2: receipt_analytics_ai_extract_vw (from AI_EXTRACT)
+-- ----------------------------------------------------------------------------
+-- Flatten extracted_receipt_data_via_ai_extract with array indexing
+
+CREATE OR REPLACE VIEW receipt_analytics_ai_extract_vw AS
+SELECT
+    relative_path AS receipt_filename,
+    extracted_data:response.vendor.vendor_name[0]::STRING AS vendor_name,
+    extracted_data:response.transaction.receipt_id[0]::STRING AS receipt_id,
+    TRY_TO_DATE(extracted_data:response.transaction.date[0]::STRING) AS transaction_date,
+    extracted_data:response.transaction.payment_method[0]::STRING AS payment_method,
+    extracted_data:response.customer.company_name[0]::STRING AS company_name,
+    extracted_data:response.customer.customer_name[0]::STRING AS customer_name,
+    extracted_data:response.campaign.name[0]::STRING AS campaign_name,
+    TRY_TO_DATE(extracted_data:response.campaign.period_startdate[0]::STRING) AS period_startdate,
+    TRY_TO_DATE(extracted_data:response.campaign.period_enddate[0]::STRING) AS period_enddate,
+    extracted_data:response.campaign.content_types[0]::STRING AS content_types,
+    -- Strip $ and , from financial values and preserve decimals
+    TRY_TO_DECIMAL(REPLACE(REPLACE(extracted_data:response.financials.subtotal[0]::STRING, '$', ''), ',', ''), 10, 2) AS subtotal,
+    TRY_TO_DECIMAL(REPLACE(REPLACE(extracted_data:response.financials.tax[0]::STRING, '$', ''), ',', ''), 10, 2) AS tax,
+    TRY_TO_DECIMAL(REPLACE(REPLACE(extracted_data:response.financials.total[0]::STRING, '$', ''), ',', ''), 10, 2) AS total_amount,
+    -- Strip $ from CPM and preserve decimals
+    TRY_TO_DECIMAL(REPLACE(extracted_data:response.metrics.cpm[0]::STRING, '$', ''), 10, 2) AS cpm,
+    -- Strip % from CTR and Bounce Rate and preserve decimals
+    TRY_TO_DECIMAL(REPLACE(extracted_data:response.metrics.ctr[0]::STRING, '%', ''), 10, 2) AS ctr_percent,
+    TRY_TO_DECIMAL(REPLACE(extracted_data:response.metrics.bounce_rate[0]::STRING, '%', ''), 10, 2) AS bounce_rate_percent,
+    extracted_data:response.metrics.pricing_model[0]::STRING AS pricing_model,
+    -- Strip $ and , from budget values and preserve decimals
+    TRY_TO_DECIMAL(REPLACE(REPLACE(extracted_data:response.budget.daily_budget[0]::STRING, '$', ''), ',', ''), 10, 2) AS daily_budget,
+    TRY_TO_DECIMAL(REPLACE(REPLACE(extracted_data:response.budget.total_budget[0]::STRING, '$', ''), ',', ''), 10, 2) AS campaign_budget,
+    extracted_data:response.targeting.age_range[0]::STRING AS age_range,
+    CURRENT_TIMESTAMP() AS processed_at
+FROM extracted_receipt_data_via_ai_extract;
+
+-- ============================================================================
 -- Analytics for V1 Receipts (Line Items) - from AI_COMPLETE
 -- View: receipt_analytics_vw
 -- ============================================================================
