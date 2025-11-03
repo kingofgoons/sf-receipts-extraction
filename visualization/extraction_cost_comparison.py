@@ -144,35 +144,32 @@ with tab2:
 with tab3:
     st.header("Cortex AI Function Credit Consumption")
     
-    # Document AI costs (AI_PARSE_DOCUMENT)
-    st.subheader("Document AI Costs (AI_PARSE_DOCUMENT)")
+    # Cortex Document Processing costs (AI_PARSE_DOCUMENT)
+    st.subheader("Cortex Document Processing (AI_PARSE_DOCUMENT)")
     doc_ai_costs = session.sql("""
     SELECT 
         DATE_TRUNC('day', START_TIME) AS day,
         COUNT(*) AS num_calls,
-        SUM(PAGES_PROCESSED) AS total_pages,
-        SUM(PAGE_CREDITS) AS total_credits,
-        AVG(PAGE_CREDITS) AS avg_credits_per_call
-    FROM SNOWFLAKE.ACCOUNT_USAGE.DOCUMENT_AI_USAGE_HISTORY
+        SUM(CREDITS_USED) AS total_credits,
+        AVG(CREDITS_USED) AS avg_credits_per_call
+    FROM SNOWFLAKE.ACCOUNT_USAGE.CORTEX_DOCUMENT_PROCESSING_USAGE_HISTORY
     WHERE START_TIME >= DATEADD('day', -30, CURRENT_TIMESTAMP())
     GROUP BY DATE_TRUNC('day', START_TIME)
     ORDER BY day DESC
     """).to_pandas()
     
     if not doc_ai_costs.empty:
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("Total Calls", f"{doc_ai_costs['NUM_CALLS'].sum():,}")
         with col2:
-            st.metric("Total Pages", f"{doc_ai_costs['TOTAL_PAGES'].sum():,}")
-        with col3:
             st.metric("Total Credits", f"{doc_ai_costs['TOTAL_CREDITS'].sum():.2f}")
-        with col4:
+        with col3:
             st.metric("Avg Credits/Call", f"{doc_ai_costs['AVG_CREDITS_PER_CALL'].mean():.4f}")
         
         st.dataframe(doc_ai_costs, use_container_width=True)
     else:
-        st.info("No Document AI usage data available yet.")
+        st.info("No Cortex Document Processing usage data available yet.")
     
     st.markdown("---")
     
