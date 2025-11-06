@@ -227,7 +227,7 @@ with tab3:
         SUM(TOKEN_CREDITS) AS total_credits,
         AVG(TOKEN_CREDITS) AS avg_credits_per_call
     FROM SNOWFLAKE.ACCOUNT_USAGE.CORTEX_FUNCTIONS_USAGE_HISTORY
-    WHERE FUNCTION_NAME IN ('AI_COMPLETE', 'AI_EXTRACT')
+    WHERE FUNCTION_NAME IN ('COMPLETE', 'AI_EXTRACT')
       AND START_TIME >= DATEADD('day', -{days_back}, CURRENT_TIMESTAMP())
     GROUP BY FUNCTION_NAME, MODEL_NAME, DATE_TRUNC('day', START_TIME)
     ORDER BY day DESC, FUNCTION_NAME, MODEL_NAME
@@ -245,7 +245,7 @@ with tab3:
         col1, col2 = st.columns(2)
         
         for _, row in function_summary.iterrows():
-            with col1 if row['FUNCTION_NAME'] == 'AI_COMPLETE' else col2:
+            with col1 if row['FUNCTION_NAME'] == 'COMPLETE' else col2:
                 st.markdown(f"**{row['FUNCTION_NAME']}**")
                 st.metric("Calls", f"{row['NUM_CALLS']:.0f}")
                 st.metric("Total Tokens", f"{row.get('TOTAL_TOKENS', 0):,.0f}")
